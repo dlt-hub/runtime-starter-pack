@@ -1,0 +1,13 @@
+[project]
+name = "runtime-starter-pack"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dlthub>=0.20.0a1",
+    "dlt[motherduck,workspace,hub]==1.20.0a1",
+    "ibis-framework>=11.0.0",
+    "marimo>=0.18.2",
+    "numpy>=2.3.5",
+]
