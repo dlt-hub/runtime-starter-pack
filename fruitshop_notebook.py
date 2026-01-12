@@ -15,7 +15,7 @@ def _():
 
     pipeline = dlt.attach(
         pipeline_name="fruitshop",
-        destination='fruitshop_destination',
+        destination="fruitshop_destination",
         dataset_name="fruitshop_data",
     )
     return (pipeline,)
@@ -25,31 +25,38 @@ def _():
 def _(pipeline):
     # NOTE: This line displays the destination dialect of the pipeline
     # gives a hint as to what kind of database is being used
-    mo.vstack([
-        mo.md("## Pipeline Info"),
-        mo.md(f"Pipeline is using destination type: {pipeline.destination.destination_type}"),
-    ])
+    mo.vstack(
+        [
+            mo.md("## Pipeline Info"),
+            mo.md(
+                f"Pipeline is using destination type: {pipeline.destination.destination_type}"
+            ),
+        ]
+    )
     return
 
 
 @app.cell
 def _(pipeline):
     # NOTE: This line displays the data of the customers table in a marimo table
-    mo.vstack([
-        mo.md("## Customers Table"),
-        pipeline.dataset().customers.arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("## Customers Table"),
+            pipeline.dataset().customers.arrow(),
+        ]
+    )
     return
+
 
 @app.cell
 def _(pipeline: dlt.Pipeline, mo=mo):
-    mo.vstack([
-        mo.md("## Pipeline Mermaid Diagram"),
-        mo.mermaid(pipeline.default_schema.to_mermaid()),
-    ])
+    mo.vstack(
+        [
+            mo.md("## Pipeline Mermaid Diagram"),
+            mo.mermaid(pipeline.default_schema.to_mermaid()),
+        ]
+    )
     return
-
-
 
 
 if __name__ == "__main__":

@@ -67,7 +67,9 @@ def purchases():
             "customer_id": random.choice(customers_ids),
             "inventory_id": random.choice(inventory_ids),
             "quantity": random.randint(1, 5),
-            "date": (start_date + timedelta(days=random.randint(0, 13))).strftime("%Y-%m-%d"),
+            "date": (start_date + timedelta(days=random.randint(0, 13))).strftime(
+                "%Y-%m-%d"
+            ),
         }
         for i in range(100)
     ]
@@ -84,7 +86,7 @@ def load_shop() -> None:
     # otherwise the defaults will be used that are derived from the current script name
     p = dlt.pipeline(
         pipeline_name="fruitshop",
-        destination='fruitshop_destination',
+        destination="fruitshop_destination",
         dataset_name="fruitshop_data",
     )
 
