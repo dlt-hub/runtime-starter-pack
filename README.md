@@ -131,7 +131,7 @@ dltHub Runtime supports two types of jobs:
   - Runs with the `prod` profile.
 
 - **Interactive jobs** – long-running jobs that serve an interactive notebook or app.
-  - Started with `dlt runtime <script>`.
+  - Started with `dlt runtime serve <script>`.
   - Typical use cases: Marimo notebooks, dashboards, and (in the future) apps like Streamlit.
   - Runs with the `access` profile.
 
