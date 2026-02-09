@@ -1,5 +1,10 @@
-  [destination.fruitshop_destination]
-  destination_type="motherduck"
+[destination.fruitshop_destination]
+destination_type="motherduck"
 
-  [destination.jaffleshop_transformation_destination]
-  destination_type="motherduck"
+[destination.jaffleshop_transformation_destination]
+destination_type="motherduck"
+
+[destination.fruitshop_destination.credentials]
+database = "my_db"
+password = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imxpc0BkbHRodWIuY29tIiwibWRSZWdpb24iOiJhd3MtZXUtY2VudHJhbC0xIiwic2Vzc2lvbiI6Imxpcy5kbHRodWIuY29tIiwicGF0IjoiRjBEVEZ2S29yMndxeW9vRW9DWU5sdzFGR0JvMzExcWNEN1luU3JJWnFDMCIsInVzZXJJZCI6IjNjMWI3NmJlLTNiMjktNDJkNS1hOWRmLTliY2ViNzg2MGFmNSIsImlzcyI6Im1kX3BhdCIsInJlYWRPbmx5Ijp0cnVlLCJ0b2tlblR5cGUiOiJyZWFkX3NjYWxpbmciLCJpYXQiOjE3NzAxNDA2NjN9.bdreQL-aowkgpqVzeI3U7s7kl90h1XlCpljO0zFt6k8"  
+# Read-only token
