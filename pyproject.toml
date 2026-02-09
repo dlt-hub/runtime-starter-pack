@@ -10,5 +10,5 @@ dependencies = [
     "duckdb<1.4.3",
     "numpy>=2.3.5",
     "pyarrow-hotfix>=0.7",
-    "dlt-runtime>=0.20.1",
+    "dlt-runtime>=0.21.0",
 ]
