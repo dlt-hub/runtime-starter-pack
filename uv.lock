@@ -233,7 +233,7 @@ wheels = [
 
 [[package]]
 name = "dlt"
-version = "1.20.0"
+version = "1.21.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -262,9 +262,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/76/29/a1ff457d07abf09930f317f8875cfe31dcc58cdc46a417adfffe04524433/dlt-1.20.0.tar.gz", hash = "sha256:be5feb887efe9cb33fbca1402c2069517b343b22edb4a09a389a6455ff68e4fb", size = 882567, upload-time = "2025-12-09T22:57:48.777Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/07/86/824b4ccedc99efcb1b109e4e124745878fd3f5fba8d255e6205c97591769/dlt-1.21.0.tar.gz", hash = "sha256:144621bba63105715a4667830556e7a3a69f7f47407bf520955fe989ae4ce646", size = 911050, upload-time = "2026-01-20T11:55:31.979Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/ad/5e75d9b5c63c5191bf520e8e8baf68357f8a336dd3cd7188c8db88a2ea39/dlt-1.20.0-py3-none-any.whl", hash = "sha256:894968cd485474f438753cd5f6ab4f43ae1dab6bc06e746abc6c70fd5754f350", size = 1120030, upload-time = "2025-12-09T22:57:46.507Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/8c/5c40a37cf035cf757175488fe73007a5d41f50915c7aa29634953204b43c/dlt-1.21.0-py3-none-any.whl", hash = "sha256:adb73bc3c58d29ed53d8a629ef926005d938812ab2191663e863abe9fa21e164", size = 1153877, upload-time = "2026-01-20T11:55:29.955Z" },
 ]
 
 [package.optional-dependencies]
@@ -287,7 +287,7 @@ workspace = [
 
 [[package]]
 name = "dlt-runtime"
-version = "0.20.1"
+version = "0.21.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -297,9 +297,9 @@ dependencies = [
     { name = "python-jose" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2e/cf/39b37b8f5a38bad6cd808fe00dc89b2fbf83ab35880f1a2442555eea0eeb/dlt_runtime-0.20.1.tar.gz", hash = "sha256:0e49687ca9ce3cd0d68c1b416435902dd18a41bc53f2aff0598feba755deb216", size = 54440, upload-time = "2026-01-20T14:41:42.353Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/5f/f0a5fee7d29b84ebebb65e193964bd92d01019ff69a7bc542197044dd15f/dlt_runtime-0.21.0.tar.gz", hash = "sha256:ca939f072360aa198d01c149a759c2992f1e1aae25c5d7339587f13dfbe3f32c", size = 56719, upload-time = "2026-02-09T14:49:49.136Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/68/37815aef55e83c938ddf4864eefa6dcb8aefc143b49ffe14b03061ef6f48/dlt_runtime-0.20.1-py3-none-any.whl", hash = "sha256:0f5d5b0c32cf5b5bc667c0c89166c963349666e4157210a63532e4ba6f78b9d7", size = 130679, upload-time = "2026-01-20T14:41:40.796Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/cc/a396a9fcb043e5434617c7bd08aff480d7494ae3c6ab2c9f63aa1f49e29c/dlt_runtime-0.21.0-py3-none-any.whl", hash = "sha256:7158baff3734abeb7c2757068cca49e3f1a68098d4e511ff223965fdc84d5d30", size = 135243, upload-time = "2026-02-09T14:49:48.016Z" },
 ]
 
 [[package]]
@@ -1399,7 +1399,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dlt", extras = ["motherduck", "workspace", "hub"], specifier = ">=1.20.0" },
-    { name = "dlt-runtime", specifier = ">=0.20.1" },
+    { name = "dlt-runtime", specifier = ">=0.21.0" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pyarrow-hotfix", specifier = ">=0.7" },
