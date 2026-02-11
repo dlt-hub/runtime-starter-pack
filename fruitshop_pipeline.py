@@ -1,12 +1,15 @@
 """The Default Pipeline Template provides a simple starting point for your dlt pipeline with locally generated data"""
 
 # mypy: disable-error-code="no-untyped-def,arg-type"
+from jinja2.nodes import With
 
 import dlt
 import random
 from datetime import datetime, timedelta  # noqa: I251
 
 from dlt.common import Decimal
+
+from dlt.hub import data_quality as dq
 
 
 # NOTE: we add a custom hint to the name column to indicate that it contains PII (personally identifiable information)
@@ -30,6 +33,10 @@ def customers():
     ]
 
 
+@dq.with_metrics(
+    dq.metrics.table.row_count(),
+    dq.metrics.column.null_count("name")
+)
 @dlt.resource(primary_key="id")
 def inventory_categories():
     """Load inventory categories from a simple python list."""
@@ -40,6 +47,11 @@ def inventory_categories():
     ]
 
 
+@dq.with_metrics(
+    dq.metrics.column.maximum("price"),
+    dq.metrics.column.minimum("price"),
+    dq.metrics.column.mean("price"),
+)
 @dlt.resource(primary_key="id")
 def inventory():
     """Load inventory data from a simple python list."""

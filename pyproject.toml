@@ -5,9 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "dlt[motherduck,workspace,hub]>=1.20.0",
+    "dlt[motherduck,workspace]==1.21.1a0",
+    "dlthub-all @ git+https://github.com/dlt-hub/dlthub.git@feat/metrics-read-interface",
+    "altair==6.0.0",
     # motherduck does not work with 1.4.3
-    "duckdb<1.4.3",
+    "duckdb==1.4.4",
     "numpy>=2.3.5",
     "pyarrow-hotfix>=0.7",
     "dlt-runtime>=0.21.0",
