@@ -1,6 +1,6 @@
 ---
-name: dlt-pipeline-dim-docs
-description: Run a dlt pipeline with configurable record limit, capture raw schema, define 20 business questions, build canonical and dimensional (star) models, document semantic layer and lineage, answer questions with SQL, and optionally add a dashboard. Use when setting up or documenting a dlt-based analytics pipeline, star schema, raw→canonical→dim workflow, or when the user wants full README documentation with DBML schemas and lineage. Source-agnostic (any data source).
+name: transformation-skill
+description: End-to-end dlt transformation workflow that runs a pipeline, documents the raw schema, designs canonical and dimensional (star) models, defines a semantic layer, answers 20 business questions via the dlt dataset API (SQL/Ibis), validates data quality, and generates complete README documentation with lineage and optional dashboard.
 ---
 
 # dlt Pipeline → Canonical → Dimensional Model Documentation
