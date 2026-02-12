@@ -1,0 +1,17 @@
+[project]
+name = "runtime-starter-pack"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dlt[motherduck,workspace,hub]>=1.20.0",
+    # motherduck does not work with 1.4.3
+    "duckdb<1.4.3",
+    "numpy>=2.3.5",
+    "pyarrow-hotfix>=0.7",
+    "dlt-runtime>=0.21.0",
+    "altair>=6.0.0",
+    "pydbml>=1.2.0",
+    "pandas"
+]
