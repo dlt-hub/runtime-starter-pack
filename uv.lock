@@ -317,7 +317,7 @@ wheels = [
 [[package]]
 name = "dlthub"
 version = "0.20.1"
-source = { git = "https://github.com/dlt-hub/dlthub.git?subdirectory=packages%2Fdlthub&rev=feat%2Fmetrics-read-interface#e55e45df64c10601617e64b4baaca19669d2f84b" }
+source = { git = "https://github.com/dlt-hub/dlthub.git?subdirectory=packages%2Fdlthub&rev=devel#f80b1b5ed42197958a71385c572b48dfcb514f23" }
 dependencies = [
     { name = "python-jose" },
     { name = "ruamel-yaml" },
@@ -327,7 +327,7 @@ dependencies = [
 [[package]]
 name = "dlthub-all"
 version = "0.20.1"
-source = { git = "https://github.com/dlt-hub/dlthub.git?rev=feat%2Fmetrics-read-interface#e55e45df64c10601617e64b4baaca19669d2f84b" }
+source = { git = "https://github.com/dlt-hub/dlthub.git?rev=devel#f80b1b5ed42197958a71385c572b48dfcb514f23" }
 dependencies = [
     { name = "dlthub" },
 ]
@@ -1486,7 +1486,7 @@ requires-dist = [
     { name = "altair", specifier = "==6.0.0" },
     { name = "dlt", extras = ["motherduck", "workspace"], specifier = "==1.21.1a0" },
     { name = "dlt-runtime", specifier = ">=0.21.0" },
-    { name = "dlthub-all", git = "https://github.com/dlt-hub/dlthub.git?rev=feat%2Fmetrics-read-interface" },
+    { name = "dlthub-all", git = "https://github.com/dlt-hub/dlthub.git?rev=devel" },
     { name = "duckdb", specifier = "==1.4.4" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pyarrow-hotfix", specifier = ">=0.7" },
