@@ -371,26 +371,24 @@ def _(existing_metrics, mo, table_select):
     return (column_select,)
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(column_select, existing_metrics, mo, table_select):
     _columns = list(
         sorted(
             set(
-                m[\"name\"] for m in existing_metrics
-                if m.get(\"table\"] == table_select.value
-                and m[\"column\"] == column_select.value
-                and m[\"name\"] is not None
+                m["name"] for m in existing_metrics
+                if m.get("table") == table_select.value
+                and m["column"] == column_select.value
+                and m["name"] is not None
             )
         )
     )
     metric_select = mo.ui.dropdown(
         options=_columns,
         value=_columns[0] if _columns else None,
-        label=\"Metric\"
+        label="Metric"
     )
-    """,
-    name="_"
-)
+    return (metric_select,)
 
 
 @app.cell
