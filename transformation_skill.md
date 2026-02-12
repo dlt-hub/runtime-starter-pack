@@ -61,6 +61,22 @@ Run the full workflow below. Use **dlt** for ingestion. Use the dlt **dataset** 
 ## 5. Dimensional (star) model
 
 - Design a **dimensional star schema**: **facts** (fct_*) and **dimensions** (dim_*) that can answer the 20 questions. Facts reference dimensions by key (e.g. fct_deals.company_id → dim_company, fct_deals.owner_id → dim_owner).
+- **Declare aggregation types** for each measure in fact tables to guide downstream transformations and BI tools:
+
+  | Aggregation | Use for                          | Example columns                     |
+  |-------------|----------------------------------|-------------------------------------|
+  | `SUM`       | Additive measures                | `revenue`, `quantity`, `cost`       |
+  | `COUNT`     | Row/event counts                 | `order_count`, `visit_count`        |
+  | `AVG`       | Averages (use SUM + COUNT if pre-aggregating) | `avg_order_value`       |
+  | `MIN`/`MAX` | Extremes                         | `first_purchase_date`, `max_score`  |
+  | `COUNT DISTINCT` | Unique counts              | `unique_customers`, `unique_sessions` |
+  | **Semi-additive** | Balances/snapshots (aggregate across some dims, not time) | `account_balance`, `inventory_level` |
+
+  **Tips:**
+  - Document aggregation type in column comments or a metadata table (e.g. `measures.yaml` or DBML comments like `amount int [note: 'agg:SUM']`).
+  - For semi-additive measures, note which dimensions they can/cannot be summed across (typically use `MAX`/`LAST` over time).
+  - Pre-aggregate carefully: if you store `avg_price`, also store `total_price` and `item_count` so downstream can re-aggregate correctly.
+
 - Implement as **views** (or dlt-loaded tables) built from the canonical model. Use **`fct_`** for fact tables and **`dim_`** for dimension tables. After deployment, all querying (step 7, dashboard) uses **pipeline.dataset()** (SQL or Ibis).
 - **Dashboard / schema viz**: Show **Dimensions (dim_)** and **Facts (fct_)** as separate groups so the star is clear. In the layer-flow Mermaid, show only **real fact→dimension relationships** (e.g. fct_deals → dim_company, dim_contact, dim_owner; fct_tickets, fct_quotes → dim_owner). Document in the README: star schema description, and schema in **DBML** plus a **rendered image**.
 
@@ -158,6 +174,22 @@ For **technique and tools** (inspect raw schema, use target ERD, transformation 
 - Use `Table` for each view/table; note in comments which are views (`c_`, `fct_`, `dim_`).
 - Use `Ref` for relationships (e.g. `fct_orders.dim_customer_id > dim_customers.id`).
 - Export to PNG/SVG from [dbdiagram.io](https://dbdiagram.io) or similar and embed in README.
+
+## Cardinality
+
+Cardinality describes how rows in one table relate to rows in another. Use the correct DBML notation:
+
+| Symbol | Cardinality   | Example                          | Meaning                              |
+|--------|---------------|----------------------------------|--------------------------------------|
+| `>`    | Many-to-one   | `fct_orders.customer_id > dim_customers.id` | Many orders → one customer  |
+| `<`    | One-to-many   | `dim_customers.id < fct_orders.customer_id` | One customer → many orders  |
+| `-`    | One-to-one    | `c_users.profile_id - c_profiles.id`        | One user → one profile      |
+| `<>`   | Many-to-many  | `products.id <> categories.id`              | Many products ↔ many categories (via junction) |
+
+**Tips:**
+- Facts typically have **many-to-one** relationships to dimensions (each fact row references one dimension row).
+- Document cardinality explicitly in your DBML `Ref` lines so the schema diagram shows correct crow's foot notation.
+- For many-to-many, model with a **junction/bridge table** (e.g. `product_categories`) rather than a direct `<>` ref.
 
 ## Semantic layer file (e.g. SEMANTIC_LAYER.md)
 
