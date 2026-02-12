@@ -371,24 +371,26 @@ def _(existing_metrics, mo, table_select):
     return (column_select,)
 
 
-@app.cell
-def _(column_select, existing_metrics, mo, table_select):
+app._unparsable_cell(
+    r"""
     _columns = list(
         sorted(
             set(
-                m["name"] for m in existing_metrics
-                if m.get("table") == table_select.value
-                and m["column"] == column_select.value
-                and m["name"] is not None
+                m[\"name\"] for m in existing_metrics
+                if m.get(\"table\"] == table_select.value
+                and m[\"column\"] == column_select.value
+                and m[\"name\"] is not None
             )
         )
     )
     metric_select = mo.ui.dropdown(
         options=_columns,
         value=_columns[0] if _columns else None,
-        label="Metric"
+        label=\"Metric\"
     )
-    return (metric_select,)
+    """,
+    name="_"
+)
 
 
 @app.cell
@@ -570,56 +572,6 @@ def _(mo):
 @app.cell
 def _(dataset):
     dataset.loads_table().arrow()
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _(con):
-    # Show all data quality metrics for our example
-    metrics_all = con.sql("""
-        SELECT
-            metric_name,
-            level,
-            table_name,
-            column_name,
-            metric_value,
-            _dlt_load_id
-        FROM _dlt_dq_metrics
-        ORDER BY level, table_name, column_name, _dlt_load_id DESC
-
-    """).to_pandas()
-
-    metrics_all
-    return
-
-
-@app.cell
-def _(con):
-    # Compare metrics between the last two runs
-    metrics_comparison = con.sql("""
-        SELECT
-            m.metric_name,
-            m.level,
-            m.table_name,
-            m.column_name,
-            m.metric_value,
-            m._dlt_load_id
-        FROM _dlt_dq_metrics m
-        WHERE m._dlt_load_id IN (
-            SELECT load_id
-            FROM _dlt_loads
-            WHERE schema_name = '_dlt_data_quality'
-            QUALIFY ROW_NUMBER() OVER (ORDER BY inserted_at DESC) <= 2
-        )
-        ORDER BY m.table_name, m.column_name, m.metric_name
-    """).to_pandas()
-
-    metrics_comparison
     return
 
 
