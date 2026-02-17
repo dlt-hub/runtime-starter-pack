@@ -15,6 +15,8 @@ with app.setup:
 def _():
     mo.md(r"""
     # Data Quality for GitHub API Data
+    > **Licensed feature** — `dlt` data quality requires the `dlthub` package and
+    > an active license.  You can self-issue a trial with `dlt license issue dlthub.transformation`.
 
     This notebook demonstrates two complementary features of `dlt` data quality:
 
