@@ -1,14 +1,11 @@
 import marimo
 
-__generated_with = "0.19.2"
+__generated_with = "0.18.4"
 app = marimo.App(width="full")
 
 with app.setup:
     import dlt
     import marimo as mo
-
-
-# ── 1. Introduction ──────────────────────────────────────────────────
 
 
 @app.cell(hide_code=True)
@@ -31,18 +28,12 @@ def _():
     return
 
 
-# ── 2. Imports ────────────────────────────────────────────────────────
-
-
 @app.cell
 def _():
     from github_pipeline import github_rest_api_source
     import dlthub
     import dlthub.data_quality as dq
-    return (dq, github_rest_api_source)
-
-
-# ── 3. Set metrics on resources ──────────────────────────────────────
+    return dq, github_rest_api_source
 
 
 @app.cell(hide_code=True)
@@ -72,7 +63,7 @@ def _(dq, github_rest_api_source):
         dq.metrics.column.maximum("commit__comment_count"),
         dq.metrics.table.row_count(),
     )
-    return (resource_commits, source)
+    return resource_commits, source
 
 
 @app.cell
@@ -87,9 +78,6 @@ def _(dq, source):
         dq.metrics.table.row_count(),
     )
     return (resource_contributors,)
-
-
-# ── 4. Run pipeline ──────────────────────────────────────────────────
 
 
 @app.cell(hide_code=True)
@@ -166,9 +154,6 @@ def _(pipeline):
         ]
     )
     return
-
-
-# ── 5. Run metrics ───────────────────────────────────────────────────
 
 
 @app.cell(hide_code=True)
@@ -390,9 +375,6 @@ def _(dq, pipeline):
     return
 
 
-# ── 6. Define quality checks ─────────────────────────────────────────
-
-
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
@@ -466,9 +448,6 @@ def _():
     return
 
 
-# ── 7. Run checks ────────────────────────────────────────────────────
-
-
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
@@ -503,9 +482,6 @@ def _(contributors_checks, dq, pipeline):
         ).arrow(),
     ])
     return
-
-
-# ── 8. CheckSuite — exploring results ────────────────────────────────
 
 
 @app.cell(hide_code=True)
@@ -567,9 +543,6 @@ def _():
 def _(check_suite):
     check_suite.get_failures("commits", "commit__author__name__is_not_null").arrow()
     return
-
-
-# ── 9. Persisting results ────────────────────────────────────────────
 
 
 @app.cell(hide_code=True)

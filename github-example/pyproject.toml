@@ -9,9 +9,10 @@ dependencies = [
     # motherduck does not work with 1.4.3
     "duckdb<1.4.3",
     "numpy>=2.3.5",
+    "dlthub-all @ git+https://github.com/dlt-hub/dlthub.git@devel",
     "pyarrow-hotfix>=0.7",
-    "dlt-runtime>=0.21.0",
+    "dlt-runtime>=0.21.1",
     "altair>=6.0.0",
     "pydbml>=1.2.0",
-    "pandas"
+    "pandas>=3.0.0"
 ]
