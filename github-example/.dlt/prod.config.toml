@@ -1,5 +1,2 @@
   [destination.warehouse]
   destination_type="motherduck"
-
-  [destination.jaffleshop_transformation_destination]
-  destination_type="motherduck"
