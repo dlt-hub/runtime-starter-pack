@@ -307,7 +307,7 @@ workspace = [
 
 [[package]]
 name = "dlt-runtime"
-version = "0.21.0"
+version = "0.21.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -317,22 +317,27 @@ dependencies = [
     { name = "python-jose" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/5f/f0a5fee7d29b84ebebb65e193964bd92d01019ff69a7bc542197044dd15f/dlt_runtime-0.21.0.tar.gz", hash = "sha256:ca939f072360aa198d01c149a759c2992f1e1aae25c5d7339587f13dfbe3f32c", size = 56719, upload-time = "2026-02-09T14:49:49.136Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/1e/a35c27c184a72f14af404838cd98906a6838a20054b8c191c47e0e00cd2f/dlt_runtime-0.21.1.tar.gz", hash = "sha256:5fe3d470542dd109ccd44c3b4d0ec1eaefedb8f5b300a3e0f1a07e44d4003a50", size = 64188, upload-time = "2026-02-13T13:11:34.233Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/cc/a396a9fcb043e5434617c7bd08aff480d7494ae3c6ab2c9f63aa1f49e29c/dlt_runtime-0.21.0-py3-none-any.whl", hash = "sha256:7158baff3734abeb7c2757068cca49e3f1a68098d4e511ff223965fdc84d5d30", size = 135243, upload-time = "2026-02-09T14:49:48.016Z" },
+    { url = "https://files.pythonhosted.org/packages/19/04/1673c5c68be6c27c1ce01614f9dc2b742d8305be6c5743e5c18ee34dd0a1/dlt_runtime-0.21.1-py3-none-any.whl", hash = "sha256:3650129becffbe8e00dabe7cc0a7ee7347b61a8d49e9a32d7be1c0bb1f3ceddd", size = 167654, upload-time = "2026-02-13T13:11:32.627Z" },
 ]
 
 [[package]]
 name = "dlthub"
 version = "0.20.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/dlt-hub/dlthub.git?subdirectory=packages%2Fdlthub&rev=devel#d7ca44a0860591a18369f1fd49557cc42833d58b" }
 dependencies = [
     { name = "python-jose" },
     { name = "ruamel-yaml" },
+    { name = "sqlglot" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/1b/2c079f22243462e914026172094411ed7ef1fc96c8089e0ca66d1a14038a/dlthub-0.20.1.tar.gz", hash = "sha256:7b3a188abc28601fd4bdf8f17e7925ef729d4f91fb67a6b4eb5c5dc5a04ac3a2", size = 158432, upload-time = "2025-12-09T15:18:10.813Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/94/b2a87853102c6aa08606b2708d8f678b1e39855e8227fe111e37c32631b6/dlthub-0.20.1-py3-none-any.whl", hash = "sha256:c4d4e0c4515cd68f316ccd02c9ecc007332c861ae6f92a488f7e961935e7f1a0", size = 209767, upload-time = "2025-12-09T15:18:09.067Z" },
+
+[[package]]
+name = "dlthub-all"
+version = "0.20.1"
+source = { git = "https://github.com/dlt-hub/dlthub.git?rev=devel#d7ca44a0860591a18369f1fd49557cc42833d58b" }
+dependencies = [
+    { name = "dlthub" },
 ]
 
 [[package]]
@@ -1541,6 +1546,7 @@ dependencies = [
     { name = "altair" },
     { name = "dlt", extra = ["hub", "motherduck", "workspace"] },
     { name = "dlt-runtime" },
+    { name = "dlthub-all" },
     { name = "duckdb" },
     { name = "numpy" },
     { name = "pandas" },
@@ -1552,10 +1558,11 @@ dependencies = [
 requires-dist = [
     { name = "altair", specifier = ">=6.0.0" },
     { name = "dlt", extras = ["motherduck", "workspace", "hub"], specifier = ">=1.20.0" },
-    { name = "dlt-runtime", specifier = ">=0.21.0" },
+    { name = "dlt-runtime", specifier = ">=0.21.1" },
+    { name = "dlthub-all", git = "https://github.com/dlt-hub/dlthub.git?rev=devel" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "numpy", specifier = ">=2.3.5" },
-    { name = "pandas" },
+    { name = "pandas", specifier = ">=3.0.0" },
     { name = "pyarrow-hotfix", specifier = ">=0.7" },
     { name = "pydbml", specifier = ">=1.2.0" },
 ]
