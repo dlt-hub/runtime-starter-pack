@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'",
@@ -253,7 +253,7 @@ wheels = [
 
 [[package]]
 name = "dlt"
-version = "1.21.0"
+version = "1.22.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -282,9 +282,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/07/86/824b4ccedc99efcb1b109e4e124745878fd3f5fba8d255e6205c97591769/dlt-1.21.0.tar.gz", hash = "sha256:144621bba63105715a4667830556e7a3a69f7f47407bf520955fe989ae4ce646", size = 911050, upload-time = "2026-01-20T11:55:31.979Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/35/4822ed7afe2dcff8b97241fe3b2db6e9f85513c31c608efb80da0a161fe6/dlt-1.22.0.tar.gz", hash = "sha256:ce17c7df0a7d5efe50679568c0439f263d4ed2ad643e28fa60590122abbee76e", size = 929379, upload-time = "2026-02-17T13:21:47.407Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/8c/5c40a37cf035cf757175488fe73007a5d41f50915c7aa29634953204b43c/dlt-1.21.0-py3-none-any.whl", hash = "sha256:adb73bc3c58d29ed53d8a629ef926005d938812ab2191663e863abe9fa21e164", size = 1153877, upload-time = "2026-01-20T11:55:29.955Z" },
+    { url = "https://files.pythonhosted.org/packages/47/9a/cf0b8b572e2f2c3c7c4ad7b8ed307b0045e36013f37be71abddf381d060a/dlt-1.22.0-py3-none-any.whl", hash = "sha256:2474726471d09e9eccff0f20a1821a2a48b60fb6cbff85f289ba7d3467232140", size = 1174024, upload-time = "2026-02-17T13:21:44.603Z" },
 ]
 
 [package.optional-dependencies]
@@ -324,20 +324,16 @@ wheels = [
 
 [[package]]
 name = "dlthub"
-version = "0.20.1"
-source = { git = "https://github.com/dlt-hub/dlthub.git?subdirectory=packages%2Fdlthub&rev=devel#d7ca44a0860591a18369f1fd49557cc42833d58b" }
+version = "0.22.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-jose" },
     { name = "ruamel-yaml" },
     { name = "sqlglot" },
 ]
-
-[[package]]
-name = "dlthub-all"
-version = "0.20.1"
-source = { git = "https://github.com/dlt-hub/dlthub.git?rev=devel#d7ca44a0860591a18369f1fd49557cc42833d58b" }
-dependencies = [
-    { name = "dlthub" },
+sdist = { url = "https://files.pythonhosted.org/packages/d5/af/fe84689f8742a7a3dc3e538faf5bc001a70168a34c6375e17eb15d2ce3e1/dlthub-0.22.0.tar.gz", hash = "sha256:cede29e2d0340b48e6ec3d287b9573340707273509f4f697b23d7f4981d86b9d", size = 169355, upload-time = "2026-02-17T15:15:56.941Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/33/0cb13a6a0ac6d416efe69265131b625ad08754824dbbbac5accc1c5c12f6/dlthub-0.22.0-py3-none-any.whl", hash = "sha256:7b57ce78613607f49c169152f3d544aed90aed6783a0bb82d2dfe0f92b2a4713", size = 225911, upload-time = "2026-02-17T15:15:55.011Z" },
 ]
 
 [[package]]
@@ -480,7 +476,7 @@ wheels = [
 
 [[package]]
 name = "ibis-framework"
-version = "11.0.0"
+version = "12.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "atpublic" },
@@ -491,9 +487,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/93/c8/f03c7c6e8ab96e5efd67ea5ce6eaf575bde78b4bfb9115f283d5e6e19ea2/ibis_framework-11.0.0.tar.gz", hash = "sha256:0249185eaabb800e224f448cc06ce8ba168df00b269e132d62629f462eca8842", size = 1237767, upload-time = "2025-10-15T13:12:10.01Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f2/8e/2e7ad9bdeaf45350da7beeb67a0d4317d400dac882825eb7c3bd4d3c6ae1/ibis_framework-12.0.0.tar.gz", hash = "sha256:238624f2c14fdab8382ca2f4f667c3cdb81e29844cd5f8db8a325d0743767c61", size = 1351369, upload-time = "2026-02-07T14:31:13.171Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/86/c0/2851a8a55d0fea03b80fd45815069b686e032938fc68fa9d91ac776c148c/ibis_framework-11.0.0-py3-none-any.whl", hash = "sha256:92ff82a96f4eac7f86fa9b6a315e04b5a8f9ed3d186539d88f48e628363f2e72", size = 1935652, upload-time = "2025-10-15T13:12:07.954Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/b3/11d406849715b47c9d69bb22f50874f80caee96bd1cbe7b61abbebbf5a05/ibis_framework-12.0.0-py3-none-any.whl", hash = "sha256:0bbd790f268da9cb87926d5eaad2b827a573927113c4ed3be5095efa89b9e512", size = 2079219, upload-time = "2026-02-07T14:31:10.646Z" },
 ]
 
 [[package]]
@@ -1197,18 +1193,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pydbml"
-version = "1.2.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pyparsing" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1b/7c/d8baefcdd447d50fe24ab94e5344f9142e49f5d353e5f63863db0536dffd/pydbml-1.2.1.tar.gz", hash = "sha256:8c1232291948fd5857792aa732a33e71418c47f6a2badea869dc37377394566b", size = 36432, upload-time = "2025-10-24T12:28:40.8Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/39/99396a0e876cef85155549b3a76144c77af8adc0f0c4f0e0dfc3d4ace109/pydbml-1.2.1-py3-none-any.whl", hash = "sha256:709ad1d040268367a1be4653affd7dae206433f5e7a799ab5b32fad2ed8aa384", size = 46318, upload-time = "2025-10-24T12:28:39.672Z" },
-]
-
-[[package]]
 name = "pygments"
 version = "2.19.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1242,15 +1226,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d4/95/e4fa281e3f13b3d9c4aaebb21ef44879840325fa418276dd921209a5e9f9/pymdown_extensions-10.18.tar.gz", hash = "sha256:20252abe6367354b24191431617a072ee6be9f68c5afcc74ea5573508a61f9e5", size = 847697, upload-time = "2025-12-07T17:22:12.857Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/46/a4/aa2bada4a2fd648f40f19affa55d2c01dc7ff5ea9cffd3dfdeb6114951db/pymdown_extensions-10.18-py3-none-any.whl", hash = "sha256:090bca72be43f7d3186374e23c782899dbef9dc153ef24c59dcd3c346f9ffcae", size = 266703, upload-time = "2025-12-07T17:22:11.22Z" },
-]
-
-[[package]]
-name = "pyparsing"
-version = "3.3.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/91/9c6ee907786a473bf81c5f53cf703ba0957b23ab84c264080fb5a450416f/pyparsing-3.3.2.tar.gz", hash = "sha256:c777f4d763f140633dcb6d8a3eda953bf7a214dc4eff598413c070bcdc117cbc", size = 6851574, upload-time = "2026-01-21T03:57:59.36Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/bd/c038d7cc38edc1aa5bf91ab8068b63d4308c66c4c8bb3cbba7dfbc049f9c/pyparsing-3.3.2-py3-none-any.whl", hash = "sha256:850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d", size = 122781, upload-time = "2026-01-21T03:57:55.912Z" },
 ]
 
 [[package]]
@@ -1545,26 +1520,22 @@ source = { virtual = "." }
 dependencies = [
     { name = "altair" },
     { name = "dlt", extra = ["hub", "motherduck", "workspace"] },
-    { name = "dlt-runtime" },
-    { name = "dlthub-all" },
+    { name = "dlthub" },
     { name = "duckdb" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pyarrow-hotfix" },
-    { name = "pydbml" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "altair", specifier = ">=6.0.0" },
-    { name = "dlt", extras = ["motherduck", "workspace", "hub"], specifier = ">=1.20.0" },
-    { name = "dlt-runtime", specifier = ">=0.21.1" },
-    { name = "dlthub-all", git = "https://github.com/dlt-hub/dlthub.git?rev=devel" },
+    { name = "dlt", extras = ["motherduck", "workspace", "hub"], specifier = ">=1.22.0" },
+    { name = "dlthub", specifier = ">=0.22.0" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pandas", specifier = ">=3.0.0" },
     { name = "pyarrow-hotfix", specifier = ">=0.7" },
-    { name = "pydbml", specifier = ">=1.2.0" },
 ]
 
 [[package]]
