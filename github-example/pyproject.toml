@@ -1,0 +1,15 @@
+[project]
+name = "runtime-starter-pack"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dlt[motherduck,workspace,hub]>=1.22.0",
+    "dlthub>=0.22.0",
+    "duckdb<1.4.3",
+    "numpy>=2.3.5",
+    "pyarrow-hotfix>=0.7",
+    "altair>=6.0.0",
+    "pandas>=3.0.0"
+]
