@@ -2,7 +2,7 @@
 
 import marimo
 
-__generated_with = "0.19.2"
+__generated_with = "0.19.10"
 app = marimo.App(width="full")
 
 with app.setup:
@@ -68,6 +68,7 @@ def _(pipeline):
 def _():
     import dlthub
     import dlthub.data_quality as dq
+
     return (dq,)
 
 
@@ -97,7 +98,7 @@ def _(dq, inventory_checks, pipeline):
     _query_rel = dq.prepare_checks(
         pipeline.dataset().inventory,
         inventory_checks,
-        level="table",
+        level="row",
     )
     _query_rel.arrow()
     return
@@ -174,6 +175,7 @@ def _(pipeline):
 @app.cell
 def _():
     import ibis
+
     return (ibis,)
 
 
