@@ -33,6 +33,7 @@ def _():
     from github_pipeline import github_rest_api_source
     import dlthub
     import dlthub.data_quality as dq
+
     return dq, github_rest_api_source
 
 
@@ -192,84 +193,96 @@ def _():
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**commits — `null_count(sha)`** (should be 0)"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="commits",
-            column="sha",
-            metric="null_count",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**commits — `null_count(sha)`** (should be 0)"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="commits",
+                column="sha",
+                metric="null_count",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**commits — `null_rate(commit__author__name)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="commits",
-            column="commit__author__name",
-            metric="null_rate",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**commits — `null_rate(commit__author__name)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="commits",
+                column="commit__author__name",
+                metric="null_rate",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**commits — `unique_count(sha)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="commits",
-            column="sha",
-            metric="unique_count",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**commits — `unique_count(sha)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="commits",
+                column="sha",
+                metric="unique_count",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**commits — `mean(commit__comment_count)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="commits",
-            column="commit__comment_count",
-            metric="mean",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**commits — `mean(commit__comment_count)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="commits",
+                column="commit__comment_count",
+                metric="mean",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**commits — `maximum(commit__comment_count)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="commits",
-            column="commit__comment_count",
-            metric="maximum",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**commits — `maximum(commit__comment_count)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="commits",
+                column="commit__comment_count",
+                metric="maximum",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**commits — `row_count()`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="commits",
-            metric="row_count",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**commits — `row_count()`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="commits",
+                metric="row_count",
+            ).arrow(),
+        ]
+    )
     return
 
 
@@ -294,84 +307,96 @@ def _():
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**contributors — `null_count(login)`** (should be 0)"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="contributors",
-            column="login",
-            metric="null_count",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**contributors — `null_count(login)`** (should be 0)"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="contributors",
+                column="login",
+                metric="null_count",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**contributors — `unique_count(login)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="contributors",
-            column="login",
-            metric="unique_count",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**contributors — `unique_count(login)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="contributors",
+                column="login",
+                metric="unique_count",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**contributors — `mean(contributions)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="contributors",
-            column="contributions",
-            metric="mean",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**contributors — `mean(contributions)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="contributors",
+                column="contributions",
+                metric="mean",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**contributors — `maximum(contributions)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="contributors",
-            column="contributions",
-            metric="maximum",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**contributors — `maximum(contributions)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="contributors",
+                column="contributions",
+                metric="maximum",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**contributors — `minimum(contributions)`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="contributors",
-            column="contributions",
-            metric="minimum",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**contributors — `minimum(contributions)`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="contributors",
+                column="contributions",
+                metric="minimum",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(dq, pipeline):
-    mo.vstack([
-        mo.md("**contributors — `row_count()`**"),
-        dq.read_metric(
-            pipeline.dataset(),
-            table="contributors",
-            metric="row_count",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**contributors — `row_count()`**"),
+            dq.read_metric(
+                pipeline.dataset(),
+                table="contributors",
+                metric="row_count",
+            ).arrow(),
+        ]
+    )
     return
 
 
@@ -460,27 +485,31 @@ def _():
 
 @app.cell
 def _(commits_checks, dq, pipeline):
-    mo.vstack([
-        mo.md("### Commits — check results"),
-        dq.prepare_checks(
-            pipeline.dataset().commits,
-            commits_checks,
-            level="table",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("### Commits — check results"),
+            dq.prepare_checks(
+                pipeline.dataset().commits,
+                commits_checks,
+                level="table",
+            ).arrow(),
+        ]
+    )
     return
 
 
 @app.cell
 def _(contributors_checks, dq, pipeline):
-    mo.vstack([
-        mo.md("### Contributors — check results"),
-        dq.prepare_checks(
-            pipeline.dataset().contributors,
-            contributors_checks,
-            level="table",
-        ).arrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("### Contributors — check results"),
+            dq.prepare_checks(
+                pipeline.dataset().contributors,
+                contributors_checks,
+                level="table",
+            ).arrow(),
+        ]
+    )
     return
 
 

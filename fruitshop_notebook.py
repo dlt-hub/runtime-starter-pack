@@ -77,7 +77,7 @@ def _(dq):
     inventory_checks = [
         dq.checks.is_in("name", ["apple", "pear", "cherry"]),
         dq.checks.is_not_null("price"),
-        dq.checks.case("price < 0")  # arbitrary condition evaluated row-wise
+        dq.checks.case("price < 0"),  # arbitrary condition evaluated row-wise
     ]
     return (inventory_checks,)
 
@@ -116,7 +116,9 @@ def _():
 
 @app.cell
 def _(dq, inventory_checks, pipeline):
-    check_suite = dq.CheckSuite(pipeline.dataset(), checks={"inventory": inventory_checks})
+    check_suite = dq.CheckSuite(
+        pipeline.dataset(), checks={"inventory": inventory_checks}
+    )
     check_suite.checks
     return (check_suite,)
 
@@ -181,11 +183,8 @@ def _():
 
 @app.cell
 def _(customers, ibis):
-    customer_cities = (
-        customers.group_by("city")
-        .aggregate(
-            number_of_customers=ibis._.id.count(),
-        )
+    customer_cities = customers.group_by("city").aggregate(
+        number_of_customers=ibis._.id.count(),
     )
     customer_cities  # we see the query plan
     return (customer_cities,)

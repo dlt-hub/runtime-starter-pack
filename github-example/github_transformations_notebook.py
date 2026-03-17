@@ -53,6 +53,7 @@ def _():
 @app.cell
 def _():
     from github_pipeline import github_rest_api_source
+
     return (github_rest_api_source,)
 
 
@@ -84,10 +85,12 @@ def _():
 
 @app.cell
 def _(ingest_pipe):
-    mo.vstack([
-        mo.md("### Raw Schema"),
-        mo.mermaid(ingest_pipe.default_schema.to_mermaid()),
-    ])
+    mo.vstack(
+        [
+            mo.md("### Raw Schema"),
+            mo.mermaid(ingest_pipe.default_schema.to_mermaid()),
+        ]
+    )
     return
 
 
@@ -117,6 +120,7 @@ def _():
 @app.cell
 def _():
     import ibis
+
     return (ibis,)
 
 
@@ -152,10 +156,8 @@ def _():
 
 @app.cell
 def _(raw_parents):
-    parent_counts = (
-        raw_parents
-        .group_by(raw_parents._dlt_parent_id)
-        .aggregate(parent_count=raw_parents._dlt_id.count())
+    parent_counts = raw_parents.group_by(raw_parents._dlt_parent_id).aggregate(
+        parent_count=raw_parents._dlt_id.count()
     )
     parent_counts.to_pyarrow()
     return (parent_counts,)
@@ -181,7 +183,9 @@ def _(ibis, parent_counts, raw_commits):
     clean_commits = enriched.select(
         sha=raw_commits.sha,
         author_login=ibis.coalesce(raw_commits.author__login, ibis.literal("unknown")),
-        committer_login=ibis.coalesce(raw_commits.committer__login, ibis.literal("unknown")),
+        committer_login=ibis.coalesce(
+            raw_commits.committer__login, ibis.literal("unknown")
+        ),
         author_name=raw_commits.commit__author__name,
         author_email=raw_commits.commit__author__email,
         authored_at=raw_commits.commit__author__date,
@@ -198,10 +202,12 @@ def _(ibis, parent_counts, raw_commits):
 
 @app.cell
 def _(clean_commits):
-    mo.vstack([
-        mo.md("**Result: 13 clean columns instead of 61 nested ones**"),
-        clean_commits.head(10).to_pyarrow(),
-    ])
+    mo.vstack(
+        [
+            mo.md("**Result: 13 clean columns instead of 61 nested ones**"),
+            clean_commits.head(10).to_pyarrow(),
+        ]
+    )
     return
 
 
@@ -231,6 +237,7 @@ def _():
 def _():
     import typing
     from ibis import ir
+
     return (ir, typing)
 
 
@@ -247,10 +254,8 @@ def _(ibis, ir, typing):
         raw = dataset.table("commits").to_ibis()
         parents = dataset.table("commits__parents").to_ibis()
 
-        parent_counts = (
-            parents
-            .group_by(parents._dlt_parent_id)
-            .aggregate(parent_count=parents._dlt_id.count())
+        parent_counts = parents.group_by(parents._dlt_parent_id).aggregate(
+            parent_count=parents._dlt_id.count()
         )
 
         enriched = raw.left_join(
@@ -260,7 +265,9 @@ def _(ibis, ir, typing):
         yield enriched.select(
             sha=raw.sha,
             author_login=ibis.coalesce(raw.author__login, ibis.literal("unknown")),
-            committer_login=ibis.coalesce(raw.committer__login, ibis.literal("unknown")),
+            committer_login=ibis.coalesce(
+                raw.committer__login, ibis.literal("unknown")
+            ),
             author_name=raw.commit__author__name,
             author_email=raw.commit__author__email,
             authored_at=raw.commit__author__date,
@@ -272,6 +279,7 @@ def _(ibis, ir, typing):
             parent_count=ibis.coalesce(parent_counts.parent_count, 0),
             is_merge_commit=ibis.coalesce(parent_counts.parent_count, 0) > 1,
         )
+
     return (commits,)
 
 
@@ -283,6 +291,7 @@ def _(commits):
         return [
             commits(raw_dataset),
         ]
+
     return (github_analytics,)
 
 
@@ -321,9 +330,7 @@ def _(github_analytics, ingest_pipe):
         "github_transform",
         destination="warehouse",
     )
-    transform_info = transform_pipe.run(
-        github_analytics(ingest_pipe.dataset())
-    )
+    transform_info = transform_pipe.run(github_analytics(ingest_pipe.dataset()))
     transform_info
     return (transform_pipe,)
 
@@ -344,27 +351,31 @@ def _():
 
 @app.cell
 def _(ingest_pipe):
-    mo.vstack([
-        mo.md("### Raw Schema — Before"),
-        mo.md(
-            "Three tables from the API. "
-            "Note `commits` → `commits__parents` parent-child relationship."
-        ),
-        mo.mermaid(ingest_pipe.default_schema.to_mermaid()),
-    ])
+    mo.vstack(
+        [
+            mo.md("### Raw Schema — Before"),
+            mo.md(
+                "Three tables from the API. "
+                "Note `commits` → `commits__parents` parent-child relationship."
+            ),
+            mo.mermaid(ingest_pipe.default_schema.to_mermaid()),
+        ]
+    )
     return
 
 
 @app.cell
 def _(transform_pipe):
-    mo.vstack([
-        mo.md("### Transformed Schema — After"),
-        mo.md(
-            "One clean `commits` table with 13 readable columns, "
-            "enriched with `parent_count` and `is_merge_commit` from the child table."
-        ),
-        mo.mermaid(transform_pipe.default_schema.to_mermaid()),
-    ])
+    mo.vstack(
+        [
+            mo.md("### Transformed Schema — After"),
+            mo.md(
+                "One clean `commits` table with 13 readable columns, "
+                "enriched with `parent_count` and `is_merge_commit` from the child table."
+            ),
+            mo.mermaid(transform_pipe.default_schema.to_mermaid()),
+        ]
+    )
     return
 
 
@@ -393,23 +404,27 @@ def _(t_commits):
     merges = t_commits.filter(t_commits.is_merge_commit).count().execute()
     unique_authors = t_commits.author_login.nunique().execute()
 
-    mo.vstack([
-        mo.md("### Summary"),
-        mo.hstack([
-            mo.stat(value=total, label="Total Commits"),
-            mo.stat(value=merges, label="Merge Commits"),
-            mo.stat(value=total - merges, label="Regular Commits"),
-            mo.stat(value=unique_authors, label="Unique Authors"),
-        ], justify="center"),
-    ])
+    mo.vstack(
+        [
+            mo.md("### Summary"),
+            mo.hstack(
+                [
+                    mo.stat(value=total, label="Total Commits"),
+                    mo.stat(value=merges, label="Merge Commits"),
+                    mo.stat(value=total - merges, label="Regular Commits"),
+                    mo.stat(value=unique_authors, label="Unique Authors"),
+                ],
+                justify="center",
+            ),
+        ]
+    )
     return
 
 
 @app.cell
 def _(ibis, t_commits):
     top_authors = (
-        t_commits
-        .group_by("author_login")
+        t_commits.group_by("author_login")
         .aggregate(
             total_commits=t_commits.sha.count(),
             merge_commits=t_commits.is_merge_commit.cast("int64").sum(),
@@ -441,18 +456,19 @@ def _(top_authors):
         .properties(width=650, height=400)
     )
 
-    mo.vstack([
-        mo.md("### Top Authors"),
-        bars,
-    ])
+    mo.vstack(
+        [
+            mo.md("### Top Authors"),
+            bars,
+        ]
+    )
     return (alt,)
 
 
 @app.cell
 def _(ibis, t_commits):
     monthly = (
-        t_commits
-        .mutate(month=t_commits.authored_at.truncate("M"))
+        t_commits.mutate(month=t_commits.authored_at.truncate("M"))
         .group_by("month")
         .aggregate(
             total=t_commits.sha.count(),
@@ -478,24 +494,24 @@ def _(alt, mo, monthly):
         tooltip=["month:T", "merges:Q"],
     )
 
-    chart = (
-        (regular_line + merge_line)
-        .properties(width=700, height=350, title="Monthly Commits: Regular vs Merge")
+    chart = (regular_line + merge_line).properties(
+        width=700, height=350, title="Monthly Commits: Regular vs Merge"
     )
 
-    mo.vstack([
-        mo.md("### Commit Activity Over Time"),
-        mo.md("🔵 Regular commits &nbsp; 🔴 Merge commits"),
-        chart,
-    ])
+    mo.vstack(
+        [
+            mo.md("### Commit Activity Over Time"),
+            mo.md("🔵 Regular commits &nbsp; 🔴 Merge commits"),
+            chart,
+        ]
+    )
     return
 
 
 @app.cell
 def _(ibis, t_commits):
     daily_authors = (
-        t_commits
-        .mutate(month=t_commits.authored_at.truncate("M"))
+        t_commits.mutate(month=t_commits.authored_at.truncate("M"))
         .group_by("month")
         .aggregate(unique_authors=t_commits.author_login.nunique())
         .order_by("month")
@@ -517,10 +533,12 @@ def _(alt, daily_authors, mo):
         .properties(width=700, height=300)
     )
 
-    mo.vstack([
-        mo.md("### Author Activity Over Time"),
-        authors_chart,
-    ])
+    mo.vstack(
+        [
+            mo.md("### Author Activity Over Time"),
+            authors_chart,
+        ]
+    )
     return
 
 
@@ -528,17 +546,21 @@ def _(alt, daily_authors, mo):
 def _(mo, top_authors):
     df = top_authors.copy()
     df["merge_ratio"] = (df["merge_commits"] / df["total_commits"] * 100).round(1)
-    df = df.rename(columns={
-        "author_login": "Author",
-        "total_commits": "Total",
-        "merge_commits": "Merges",
-        "merge_ratio": "Merge %",
-    })
+    df = df.rename(
+        columns={
+            "author_login": "Author",
+            "total_commits": "Total",
+            "merge_commits": "Merges",
+            "merge_ratio": "Merge %",
+        }
+    )
 
-    mo.vstack([
-        mo.md("### Author Breakdown"),
-        df,
-    ])
+    mo.vstack(
+        [
+            mo.md("### Author Breakdown"),
+            df,
+        ]
+    )
     return
 
 

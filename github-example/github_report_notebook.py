@@ -55,14 +55,17 @@ def _(t):
     verified = t.filter(t.is_verified).count().execute()
     avg_msg = round(t.message_length.mean().execute(), 1)
 
-    mo.hstack([
-        mo.stat(value=total, label="Total Commits"),
-        mo.stat(value=merges, label="Merge Commits"),
-        mo.stat(value=regular, label="Regular Commits"),
-        mo.stat(value=authors, label="Unique Authors"),
-        mo.stat(value=verified, label="Verified Commits"),
-        mo.stat(value=avg_msg, label="Avg Message Length"),
-    ], justify="center")
+    mo.hstack(
+        [
+            mo.stat(value=total, label="Total Commits"),
+            mo.stat(value=merges, label="Merge Commits"),
+            mo.stat(value=regular, label="Regular Commits"),
+            mo.stat(value=authors, label="Unique Authors"),
+            mo.stat(value=verified, label="Verified Commits"),
+            mo.stat(value=avg_msg, label="Avg Message Length"),
+        ],
+        justify="center",
+    )
     return
 
 
@@ -77,8 +80,7 @@ def _():
 @app.cell
 def _(ibis, t):
     top_authors = (
-        t
-        .group_by("author_login")
+        t.group_by("author_login")
         .aggregate(
             total_commits=t.sha.count(),
             merge_commits=t.is_merge_commit.cast("int64").sum(),
@@ -126,20 +128,24 @@ def _(top_authors):
     df = top_authors.copy()
     df["merge_pct"] = (df["merge_commits"] / df["total_commits"] * 100).round(1)
     df["verified_pct"] = (df["verified_commits"] / df["total_commits"] * 100).round(1)
-    df = df.rename(columns={
-        "author_login": "Author",
-        "total_commits": "Total",
-        "merge_commits": "Merges",
-        "verified_commits": "Verified",
-        "avg_message_length": "Avg Msg Len",
-        "merge_pct": "Merge %",
-        "verified_pct": "Verified %",
-    })
+    df = df.rename(
+        columns={
+            "author_login": "Author",
+            "total_commits": "Total",
+            "merge_commits": "Merges",
+            "verified_commits": "Verified",
+            "avg_message_length": "Avg Msg Len",
+            "merge_pct": "Merge %",
+            "verified_pct": "Verified %",
+        }
+    )
 
-    mo.vstack([
-        mo.md("### Breakdown"),
-        df,
-    ])
+    mo.vstack(
+        [
+            mo.md("### Breakdown"),
+            df,
+        ]
+    )
     return
 
 
@@ -154,8 +160,7 @@ def _():
 @app.cell
 def _(ibis, t):
     monthly = (
-        t
-        .mutate(month=t.authored_at.truncate("M"))
+        t.mutate(month=t.authored_at.truncate("M"))
         .group_by("month")
         .aggregate(
             total=t.sha.count(),
@@ -182,15 +187,15 @@ def _(alt, monthly):
             tooltip=["month:T", "merges:Q"],
         )
 
-        chart = (
-            (regular_line + merge_line)
-            .properties(width=700, height=350, title="Monthly Commits: Regular vs Merge")
+        chart = (regular_line + merge_line).properties(
+            width=700, height=350, title="Monthly Commits: Regular vs Merge"
         )
-        return mo.vstack([
-            mo.md("🔵 Regular &nbsp; 🔴 Merge"),
-            chart,
-        ])
-
+        return mo.vstack(
+            [
+                mo.md("🔵 Regular &nbsp; 🔴 Merge"),
+                chart,
+            ]
+        )
 
     _()
     return
@@ -199,8 +204,7 @@ def _(alt, monthly):
 @app.cell
 def _(alt, t):
     monthly_authors = (
-        t
-        .mutate(month=t.authored_at.truncate("M"))
+        t.mutate(month=t.authored_at.truncate("M"))
         .group_by("month")
         .aggregate(unique_authors=t.author_login.nunique())
         .order_by("month")
@@ -264,8 +268,7 @@ def _():
 @app.cell
 def _(alt, t):
     dow_hour = (
-        t
-        .mutate(
+        t.mutate(
             day_of_week=t.authored_at.day_of_week.index(),
             hour=t.authored_at.hour(),
         )
@@ -283,7 +286,9 @@ def _(alt, t):
         .encode(
             x=alt.X("hour:O", title="Hour of Day"),
             y=alt.Y("day_name:N", title="Day", sort=list(day_labels.values())),
-            color=alt.Color("commits:Q", scale=alt.Scale(scheme="blues"), title="Commits"),
+            color=alt.Color(
+                "commits:Q", scale=alt.Scale(scheme="blues"), title="Commits"
+            ),
             tooltip=[
                 alt.Tooltip("day_name:N", title="Day"),
                 alt.Tooltip("hour:O", title="Hour"),
@@ -307,12 +312,10 @@ def _():
 
 @app.cell
 def _(alt, t):
-    msg_data = (
-        t
-        .select("message_length", "is_merge_commit")
-        .execute()
+    msg_data = t.select("message_length", "is_merge_commit").execute()
+    msg_data["type"] = msg_data["is_merge_commit"].map(
+        {True: "Merge", False: "Regular"}
     )
-    msg_data["type"] = msg_data["is_merge_commit"].map({True: "Merge", False: "Regular"})
 
     histogram = (
         alt.Chart(msg_data, title="Message Length Distribution")
@@ -322,7 +325,9 @@ def _(alt, t):
             y=alt.Y("count():Q", title="Commits"),
             color=alt.Color(
                 "type:N",
-                scale=alt.Scale(domain=["Regular", "Merge"], range=["#4c78a8", "#e45756"]),
+                scale=alt.Scale(
+                    domain=["Regular", "Merge"], range=["#4c78a8", "#e45756"]
+                ),
                 title="Type",
             ),
             tooltip=["type:N", "count():Q"],
@@ -346,8 +351,7 @@ def _():
 def _(alt, ibis, t):
     def _():
         verified_monthly = (
-            t
-            .mutate(month=t.authored_at.truncate("M"))
+            t.mutate(month=t.authored_at.truncate("M"))
             .group_by("month")
             .aggregate(
                 total=t.sha.count(),
@@ -369,15 +373,16 @@ def _(alt, ibis, t):
             tooltip=["month:T", "unverified:Q"],
         )
 
-        chart = (
-            (v_line + u_line)
-            .properties(width=700, height=300, title="Verified vs Unverified Commits per Month")
+        chart = (v_line + u_line).properties(
+            width=700, height=300, title="Verified vs Unverified Commits per Month"
         )
 
-        return mo.vstack([
-            mo.md("🟢 Verified &nbsp; ⚪ Unverified"),
-            chart,
-        ])
+        return mo.vstack(
+            [
+                mo.md("🟢 Verified &nbsp; ⚪ Unverified"),
+                chart,
+            ]
+        )
 
     _()
     return
