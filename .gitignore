@@ -211,3 +211,6 @@ secrets.toml
 .dlt/.var
 _local
 .git
+
+# LanceDB data directories
+*.lancedb/

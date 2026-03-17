@@ -12,3 +12,8 @@ destination_type="duckdb"
 
 [destination.jaffleshop_transformation_destination]
 destination_type="duckdb"
+
+[destination.lance]
+destination_type="lancedb"
+embedding_model_provider="openai"
+embedding_model="text-embedding-3-small"

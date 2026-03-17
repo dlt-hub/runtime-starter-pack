@@ -72,15 +72,36 @@ def _():
 @app.cell
 def _(dq):
     videos_checks = [
+        # uniqueness — every video_path should be distinct
+        dq.checks.is_unique("video_path"),
+
+        # required fields must be present
         dq.checks.is_not_null("video_path"),
         dq.checks.is_not_null("caption"),
         dq.checks.is_not_null("aesthetic_score"),
         dq.checks.is_not_null("motion_score"),
-        dq.checks.is_not_null("temporal_consistency_score"),
-        dq.checks.is_not_null("camera_motion"),
-        dq.checks.is_not_null("frame"),
-        dq.checks.is_not_null("fps"),
-        dq.checks.is_not_null("seconds"),
+
+        # scores within expected bounds
+        dq.checks.case("aesthetic_score BETWEEN 0 AND 10"),
+        dq.checks.case("motion_score >= 0"),
+        dq.checks.case("temporal_consistency_score BETWEEN 0 AND 1"),
+
+        # video metadata sanity
+        dq.checks.case("fps > 0 AND fps <= 120"),
+        dq.checks.case("seconds > 0"),
+        dq.checks.case("frame > 0"),
+
+        # camera_motion should be a known base type (allows compound like "zoom_in+tilt_up")
+        dq.checks.case(
+            "camera_motion LIKE '%static%'"
+            " OR camera_motion LIKE '%pan%'"
+            " OR camera_motion LIKE '%tilt%'"
+            " OR camera_motion LIKE '%zoom%'"
+            " OR camera_motion LIKE '%rotate%'"
+            " OR camera_motion LIKE '%follow%'"
+            " OR camera_motion LIKE '%handheld%'"
+            " OR camera_motion = 'Undetermined'"
+        ),
     ]
     return (videos_checks,)
 
