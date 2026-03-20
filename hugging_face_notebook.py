@@ -4,14 +4,15 @@
 #     "dlt[lancedb]",
 #     "dlthub",
 #     "duckdb",
-#     "ibis-framework",
+#     "ibis-framework[duckdb]",
+#     "lancedb",
 #     "marimo",
 #     "pyarrow-hotfix",
 # ]
 # ///
 
-# Full walkthrough of the HuggingFace DuckDB pipeline
-# This notebook walks through loading OpenVid video metadata from HuggingFace
+# Full walkthrough of the Hugging Face DuckDB pipeline
+# This notebook walks through loading OpenVid video metadata from Hugging Face
 # into LanceDB using DuckDB as the ingestion layer.
 
 import marimo
@@ -20,8 +21,16 @@ __generated_with = "0.19.10"
 app = marimo.App(width="full")
 
 with app.setup:
+    import os
+
     import dlt
     import marimo as mo
+
+
+@app.cell(hide_code=True)
+def _():
+    os.environ["RUNTIME__LICENSE"] = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzM5NzE4MTMsImV4cCI6MTc3NjU2MzgxMywic3ViIjoibWFjLmxhbjoyYWQzZGU4NjZkZWM0NjhjMTQ0OTA0NTRiZWMyYjk3YiIsImlzcyI6ImRsdEh1YiBJbmMuIiwibGljZW5zZV90eXBlIjoic2VsZi1pc3N1ZWQtdHJpYWwiLCJqaXQiOiIxZDRmNzZmZi1kOWI5LTQ0MmUtYWI3Yi0yNDdlYzU4NmY1NTEiLCJzY29wZSI6ImRsdGh1Yi5kYXRhX3F1YWxpdHkgZGx0aHViLmRlc3RpbmF0aW9ucy5pY2ViZXJnIGRsdGh1Yi50cmFuc2Zvcm1hdGlvbiJ9.EmyXD28RSpArGZGrNLX_aUlKOfiUPvEyCbED_lHdc3MIBijfneC15Rll80x-TxCkh_y497t4CjvRYOo6rbLa1g"
+    return
 
 
 @app.cell(hide_code=True)
@@ -31,17 +40,17 @@ def _():
 
     This notebook complements our [blog post on dltHub's recent integration with Hugging Face](https://dlthub.com/blog/hugging-face-dlt-ml).
 
-    We'll walkthrough loading the OpenVid Dataset into LanceDB using dltHub and then writing the data back to Hugging Face after data exploration, quality checks, and
+    We'll walkthrough loading the [OpenVid Dataset](https://huggingface.co/datasets/lance-format/openvid-lance) into LanceDB using dltHub and then writing the data back to Hugging Face after data exploration, quality checks, and
     filtering.
 
     The pipeline:
-    1. Uses DuckDB's `hf://` adapter to read parquet files directly from HuggingFace Hub
+    1. Uses DuckDB's `hf://` adapter to read parquet files directly from Hugging Face Hub
     2. Filters out heavy columns (video blobs, embeddings) to keep only metadata
     3. Streams rows in batches into LanceDB via `dlt`
     4. Embeds the `caption` column for vector search
     5. Runs data quality checks to validate scores, nullability, and categories
     6. Filters videos by quality thresholds to curate a training-ready subset
-    7. Writes the curated dataset back to HuggingFace via `dlt`
+    7. Writes the curated dataset back to Hugging Face via `dlt`
     """)
     return
 
@@ -56,12 +65,14 @@ def _():
 
     A `dlt.pipeline` connects a data source to a destination and manages schema
     evolution, state, and load metadata. Here we point it at LanceDB so the
-    OpenVid metadata we pull from HuggingFace lands in a queryable vector store.
+    OpenVid metadata we pull from Hugging Face lands in a queryable vector store.
 
     ```python
     pipeline = dlt.pipeline(
         pipeline_name="openvid",
-        destination="lance",
+        destination=dlt.destinations.lancedb(
+            lance_uri="/tmp/openvid_lance",
+        ),
         dataset_name="openvid",
     )
     ```
@@ -70,16 +81,14 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _():
-    import os
-
+def _(os):
     hf_token = os.environ.get("HF_TOKEN")
     mo.stop(
         hf_token is not None,
     )
     mo.callout(
         mo.md(
-            "**Warning:** `HF_TOKEN` not set. You may hit HuggingFace rate limits (HTTP 429). "
+            "**Warning:** `HF_TOKEN` not set. You may hit Hugging Face rate limits (HTTP 429). "
             "Get a token at https://huggingface.co/settings/tokens and set it with "
             "`export HF_TOKEN=hf_...`"
         ),
@@ -88,18 +97,23 @@ def _():
     return (hf_token,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     import duckdb
+    import tempfile
 
     HF_PARQUET_URL = "hf://datasets/lance-format/openvid-lance@~parquet/**/*.parquet"
     EXCLUDED_COLUMNS = {"video_blob", "embedding"}
     BATCH_SIZE = 1000
     DATASET_NAME = "openvid"
 
+    _lance_tmp = tempfile.mkdtemp(prefix="openvid_lance_")
+
     pipeline = dlt.pipeline(
         pipeline_name="openvid",
-        destination="lance",
+        destination=dlt.destinations.lancedb(
+            lance_uri=_lance_tmp,
+        ),
         dataset_name=DATASET_NAME,
     )
     return BATCH_SIZE, EXCLUDED_COLUMNS, HF_PARQUET_URL, duckdb, pipeline
@@ -119,6 +133,9 @@ def _():
     stream rows in batches.
 
     ```python
+    HF_PARQUET_URL = "hf://datasets/lance-format/openvid-lance@~parquet/**/*.parquet"
+    # Native Hugging Face read support coming soon — no DuckDB needed
+
     @dlt.resource(write_disposition="replace")
     def openvid_videos(limit: int = 100):
         with duckdb.connect() as conn:
@@ -136,7 +153,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(BATCH_SIZE, EXCLUDED_COLUMNS, HF_PARQUET_URL, duckdb, hf_token):
     @dlt.resource(write_disposition="replace")
     def openvid_videos(limit: int = 100):
@@ -158,19 +175,11 @@ def _(BATCH_SIZE, EXCLUDED_COLUMNS, HF_PARQUET_URL, duckdb, hf_token):
     return (openvid_videos,)
 
 
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    ## Load data into LanceDB
-
-    Now we run the pipeline and load the data into LanceDB.
-    """)
-    return
-
 
 @app.cell(hide_code=True)
 def _():
-    RUN_MODE_LIMIT = 10
+    RUN_MODE_LIMIT = 5
+
     is_run_mode = mo.app_meta().mode == "run"
 
     match mo.app_meta().mode:
@@ -180,20 +189,25 @@ def _():
         case _:
             limit_slider = mo.ui.slider(
                 start=0,
-                stop=500,
-                step=10,
-                value=0,
+                stop=50,
+                step=1,
+                value=5,
                 label="Rows to load",
+                full_width=True,
             )
 
-    limit_slider if limit_slider is not None else mo.md(f"**Only loading {RUN_MODE_LIMIT} rows.** Feel free to use interactive mode to load more.\n\nIn marimo edit mode, use the slider to control how many rows to load from HuggingFace.")
+    mo.vstack([
+        mo.md("## Load data into LanceDB"),
+        mo.md("Choose how many rows to fetch from Hugging Face and load into LanceDB. Set to 0 to pause the pipeline.") if limit_slider is not None else mo.md(f"**Only loading {RUN_MODE_LIMIT} rows.**"),
+        limit_slider,
+    ]) if limit_slider is not None else mo.md(f"**Only loading {RUN_MODE_LIMIT} rows.**")
     return RUN_MODE_LIMIT, is_run_mode, limit_slider
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(RUN_MODE_LIMIT, limit_slider, openvid_videos, pipeline):
     _limit = limit_slider.value if limit_slider is not None else RUN_MODE_LIMIT
-    mo.stop(_limit == 0, mo.md("**Set rows to load > 0 to run the pipeline**"))
+    mo.stop(_limit == 0, mo.md("**Set rows > 0 to run the pipeline**"))
     load_info = pipeline.run(
         openvid_videos(limit=_limit),
         table_name="videos",
@@ -228,7 +242,11 @@ def _():
     from dlt.destinations.adapters import lancedb_adapter
 
     load_info = pipeline.run(
-        lancedb_adapter(openvid_videos(limit=100), embed=["caption"]),
+        lancedb_adapter(
+            openvid_videos(limit=100),
+            # columns to generate vector embeddings for
+            embed=["caption"],
+        ),
         table_name="videos",
     )
     ```
@@ -243,7 +261,7 @@ def _():
 
     The dlt adapter for LanceDB can automatically generate vector embeddings
     at load time. Configure your embedding provider in `.dlt/config.toml` —
-    you can use OpenAI, Cohere, HuggingFace sentence-transformers, or any
+    you can use OpenAI, Cohere, Hugging Face sentence-transformers, or any
     other provider supported by `dlt`.
 
     ```toml
@@ -263,12 +281,8 @@ def _():
     ## Discover available tables
 
     The pipeline's dataset object exposes a `.tables` property listing all tables
-    that were loaded. In our case, we expect a `videos` table containing the
-    OpenVid metadata.
-
-    ```python
-    pipeline.dataset().tables
-    ```
+    that were loaded. Below we list the available tables — we expect a `videos`
+    table containing the OpenVid metadata.
     """)
     return
 
@@ -295,7 +309,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(load_info, pipeline):
     mo.mermaid(pipeline.default_schema.to_mermaid())
     return
@@ -307,7 +321,7 @@ def _():
     ## Preview the videos table
 
     Let's look at the raw data that was loaded. The pipeline selected only
-    metadata columns from HuggingFace, excluding heavy binary data like
+    metadata columns from Hugging Face, excluding heavy binary data like
     `video_blob` and `embedding`. In a production deployment, you might
     include these columns or even generate additional embeddings.
 
@@ -317,12 +331,12 @@ def _():
 
     ```python
     pipeline.dataset().videos.df()        # Pandas DataFrame
-    pipeline.dataset().videos.arrow()     # PyArrow Table
-    pipeline.dataset().videos.fetchall()  # list of tuples
+    pipeline.dataset().videos.arrow()     # PyArrow table
+    pipeline.dataset().videos.fetchall()  # List of tuples
     ```
 
     The columns we have include:
-    - `video_path` - path to the video file on HuggingFace
+    - `video_path` - path to the video file on Hugging Face
     - `caption` - text description of the video content
     - `aesthetic_score` - visual quality rating (0-10)
     - `motion_score` - amount of motion in the video
@@ -330,9 +344,6 @@ def _():
     - `camera_motion` - type of camera movement (static, pan, tilt, etc.)
     - `fps`, `seconds`, `frame` - video duration metadata
 
-    ```python
-    pipeline.dataset().videos.arrow()
-    ```
     """)
     return
 
@@ -373,7 +384,7 @@ def _():
     return (dq,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(dq):
     videos_checks = [
         # uniqueness & key constraints (primary key = unique + not null)
@@ -409,6 +420,10 @@ def _():
     mo.md(r"""
     ### Table-level results
 
+    `dq.prepare_checks()` takes a `dlt.Relation`, a list of checks, and a
+    granularity `level` (`"row"`, `"table"`, or `"dataset"`). It returns a
+    `dlt.Relation` you can materialize as Arrow or persist with `pipeline.run()`.
+
     Running checks at `level="table"` returns aggregate pass/fail counts for
     each check across the entire table.
     """)
@@ -443,26 +458,6 @@ def _(dq, load_info, pipeline, videos_checks):
         videos_checks,
         level="row",
     ).arrow()
-    return
-
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    ### Understanding `prepare_checks`
-
-    `dlthub.data_quality.prepare_checks()` returns a `dlt.Relation` with check
-    results. It takes as input:
-    - the `dlt.Relation` associated with a table found in the dataset
-    - a list of `checks`
-    - the check granularity `level`: `"row"`, `"table"`, or `"dataset"`
-
-    Since it returns a `dlt.Relation`, you can materialize it as Arrow or
-    pass it directly to `dlt.Pipeline.run()` to persist check results
-    alongside your data.
-
-    See the [data quality docs](https://dlthub.com/docs/hub/features/transformations) for more details.
-    """)
     return
 
 
@@ -505,7 +500,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(check_suite, mo):
     try:
         _successes_table = check_suite.get_successes("videos", "camera_motion__case__In").arrow()
@@ -519,7 +514,7 @@ def _(check_suite, mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(check_suite, mo):
     try:
         _failures_table = check_suite.get_failures("videos", "camera_motion__case__In").arrow()
@@ -542,7 +537,7 @@ def _():
     can pipe check results into any destination. Depending on your use case, decide:
     - what check level to save: `row`, `table`, or `dataset`
     - where to store results: checks are computed where the data lives, but you
-      can move data quality to a different location
+      can store check results in a different location
     - what pipeline and dataset to use for storage
 
     ```python
@@ -568,15 +563,6 @@ def _():
     `dlt` datasets can be converted to [Ibis](https://ibis-project.org/) tables
     for expressive, lazy analytics. Ibis builds a query plan that only executes
     when you materialize results (e.g., `.to_pyarrow()`).
-
-    ```python
-    videos_ibis = pipeline.dataset().videos.to_ibis()
-    stats = videos_ibis.aggregate(
-        total=ibis._.caption.count(),
-        avg_aesthetic=ibis._.aesthetic_score.mean(),
-    )
-    stats.to_pyarrow()
-    ```
     """)
     return
 
@@ -627,7 +613,6 @@ def _(ibis, videos_ibis):
         .group_by("camera_motion")
         .aggregate(
             count=ibis._.caption.count(),
-            avg_aesthetic=ibis._.aesthetic_score.mean(),
             avg_motion=ibis._.motion_score.mean(),
         )
         .order_by(ibis.desc("count"))
@@ -648,7 +633,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(is_run_mode):
     _defaults = {
         "aesthetic_score": 5.0,
@@ -669,7 +654,7 @@ def _(is_run_mode):
     return (filters,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(filters, videos_ibis):
     filtered = videos_ibis
     for col, slider in filters.value.items():
@@ -678,7 +663,7 @@ def _(filters, videos_ibis):
     return (filtered_arrow,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(ibis, filtered_arrow, videos_ibis):
     import pyarrow as pa
 
@@ -721,40 +706,33 @@ def _(ibis, filtered_arrow, videos_ibis):
     return
 
 
-@app.cell
-def _(filtered_arrow):
-    mo.vstack(
-        [
-            filtered_arrow.drop("video_path"),
-        ]
-    )
-    return
-
-
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ## Write back to HuggingFace
+    ### Filtered dataset preview
 
-    Once you're happy with your filtered dataset, you can write it back to
-    HuggingFace Hub using `dlt`. This closes the loop — load from HuggingFace,
-    validate, filter, and publish the curated dataset back.
+    The table below shows the videos that passed all filter thresholds,
+    with the `video_path` column removed for readability.
+
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(filtered_arrow):
-    mo.md(
-        f"Your curated dataset contains **{filtered_arrow.num_rows} videos** "
-        f"across **{filtered_arrow.num_columns} columns**, ready to export back to HuggingFace."
-    )
+    filtered_arrow.drop("video_path")
     return
 
 
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ## Write back to Hugging Face
+
+    Once you're happy with your filtered dataset, you can write it back to
+    Hugging Face Hub using `dlt`. This closes the loop — load from Hugging Face,
+    validate, filter, and publish the curated dataset back.
+
     ```python
     hf_pipeline = dlt.pipeline(
         pipeline_name="openvid_curated",
@@ -769,7 +747,7 @@ def _():
     ```
 
     The `filesystem` destination uses the `hf://` protocol to push directly to
-    HuggingFace Hub. Configure the bucket URL and authentication token in
+    Hugging Face Hub. Configure the bucket URL and authentication token in
     `.dlt/secrets.toml`:
 
     ```toml
@@ -778,12 +756,12 @@ def _():
     bucket_url = "hf://datasets/my-org"
 
     [destination.filesystem.credentials]
-    hf_token = "hf_..."  # Your HuggingFace User Access Token
+    hf_token = "hf_..."  # Your Hugging Face User Access Token
     ```
 
     **`bucket_url`** — the `hf://datasets/` prefix tells `dlt` to treat the
-    destination as a HuggingFace dataset repo. Replace `my-org` with your
-    HuggingFace username or organization. The `dataset_name` from the pipeline
+    destination as a Hugging Face dataset repo. Replace `my-org` with your
+    Hugging Face username or organization. The `dataset_name` from the pipeline
     becomes the repo name (e.g. `my-org/openvid_curated`).
 
     **`hf_token`** — a [User Access Token](https://huggingface.co/settings/tokens)
@@ -799,23 +777,26 @@ def _():
     mo.md(r"""
     ## What's next?
 
-    All data files for a table are committed in a single git commit, and `dlt`
-    automatically creates and maintains the repo's `README.md` with proper
-    metadata so the dataset appears in the HuggingFace Dataset Viewer.
+    All data files for a table are committed in a single git commit to your Hugging Face dataset repo, and `dlt` automatically creates and maintains the repo's `README.md` with proper metadata so the dataset appears in Hugging Face's dataset viewer.
 
-    Everything you've done in this notebook — loading from HuggingFace,
-    validating, filtering, and exporting — runs locally with open-source `dlt`.
-    When you're ready to move to production, [dltHub Pro](https://dlthub.com/solutions/for-frontier-labs)
-    runs your working pipeline as-is on managed, enterprise-grade infrastructure
-    — no rewriting, no stitching together scheduling and monitoring. One
-    developer can deliver what previously required an entire platform team.
+    Everything we've done in this notebook runs locally with open-source `dlt`:
 
-    See the [blog post](https://dlthub.com/blog/hugging-face-dlt-ml) for a
-    walkthrough of how and why we built this integration.
+    - **Loading** data from Hugging Face
+    - **Validating** with data quality checks
+    - **Filtering** by score thresholds
+    - **Exporting** back to Hugging Face
+
+    The key takeaway: curating ML datasets doesn't need to be a manual, error-prone process.
+    With `dlt`, you get a reproducible pipeline that handles schema evolution, incremental loads, and data quality — all in a notebook you can share with your team.
+
+    When we're ready to move to production, [dltHub Pro](https://dlthub.com/solutions/for-frontier-labs) lets us deploy this exact pipeline — no rewrites.
+    This enables one developer to accomplish what previously required an entire platform team.
+
+    To dive deeper, see the [blog post](https://dlthub.com/blog/hugging-face-dlt-ml) for a full walkthrough of how and why we built this integration.
 
     ---
 
-    Built with love in SF by [dltHub](https://dlthub.com).
+    Built [with love](https://www.linkedin.com/in/elviskahoro/) in SF by [dltHub](https://dlthub.com).
     """)
     return
 
