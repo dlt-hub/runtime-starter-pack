@@ -29,7 +29,11 @@ with app.setup:
 
 @app.cell(hide_code=True)
 def _():
-    os.environ["RUNTIME__LICENSE"] = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzM5NzE4MTMsImV4cCI6MTc3NjU2MzgxMywic3ViIjoibWFjLmxhbjoyYWQzZGU4NjZkZWM0NjhjMTQ0OTA0NTRiZWMyYjk3YiIsImlzcyI6ImRsdEh1YiBJbmMuIiwibGljZW5zZV90eXBlIjoic2VsZi1pc3N1ZWQtdHJpYWwiLCJqaXQiOiIxZDRmNzZmZi1kOWI5LTQ0MmUtYWI3Yi0yNDdlYzU4NmY1NTEiLCJzY29wZSI6ImRsdGh1Yi5kYXRhX3F1YWxpdHkgZGx0aHViLmRlc3RpbmF0aW9ucy5pY2ViZXJnIGRsdGh1Yi50cmFuc2Zvcm1hdGlvbiJ9.EmyXD28RSpArGZGrNLX_aUlKOfiUPvEyCbED_lHdc3MIBijfneC15Rll80x-TxCkh_y497t4CjvRYOo6rbLa1g"
+    from dlthub.common.license.license import create_self_signed_license
+
+    os.environ["RUNTIME__LICENSE"] = create_self_signed_license(
+        "dlthub.data_quality dlthub.destinations.iceberg dlthub.transformation"
+    )
     return
 
 
@@ -779,7 +783,7 @@ def _():
 
     All data files for a table are committed in a single git commit to your Hugging Face dataset repo, and `dlt` automatically creates and maintains the repo's `README.md` with proper metadata so the dataset appears in Hugging Face's dataset viewer.
 
-    Everything we've done in this notebook runs locally with open-source `dlt`:
+    Everything we've done in this notebook runs locally:
 
     - **Loading** data from Hugging Face
     - **Validating** with data quality checks
@@ -787,9 +791,10 @@ def _():
     - **Exporting** back to Hugging Face
 
     The key takeaway: curating ML datasets doesn't need to be a manual, error-prone process.
+
     With `dlt`, you get a reproducible pipeline that handles schema evolution, incremental loads, and data quality — all in a notebook you can share with your team.
 
-    When we're ready to move to production, [dltHub Pro](https://dlthub.com/solutions/for-frontier-labs) lets us deploy this exact pipeline — no rewrites.
+    When we're ready to move to production, [dltHub Pro](https://dlthub.com/solutions/for-frontier-labs) lets us deploy this exact pipeline — without rewriting a single line of code.
     This enables one developer to accomplish what previously required an entire platform team.
 
     To dive deeper, see the [blog post](https://dlthub.com/blog/hugging-face-dlt-ml) for a full walkthrough of how and why we built this integration.
