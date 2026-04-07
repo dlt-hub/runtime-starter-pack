@@ -313,7 +313,7 @@ wheels = [
 
 [[package]]
 name = "dlt"
-version = "1.23.0"
+version = "1.24.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -342,9 +342,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a4/dc/b71d5ff2d5dfc8d5b15369079ed7af889277ea6367e23913848f59d72da9/dlt-1.23.0.tar.gz", hash = "sha256:e61b5cdc90fc80b1f080dd4cf4bb47f32f0bf8991f0a3926dc7a697bedc6530a", size = 960825, upload-time = "2026-03-06T14:08:00.538Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/92/b1ad6b1287fb2a6bf6356b90f3b9813bc5a382fe3167653dc1b939b8e437/dlt-1.24.0.tar.gz", hash = "sha256:9227d634b89925778691513246e24cc4bfcafcf22686b401f994de48cc602e39", size = 960430, upload-time = "2026-03-19T11:41:48.898Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/47/ff900919bc7d3b0832e537b41ba3f56ccbb7c0bccfb30f0f321ff65c8aa6/dlt-1.23.0-py3-none-any.whl", hash = "sha256:99e072c1bf963f98af1f9b70ab68aa5ca2d12ef2200ff7d492b5f8eae1f6da20", size = 1212399, upload-time = "2026-03-06T14:07:58.085Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/fc/d6c21282af64470e359724720552e872eb5b36473b4ef56b880e1c132b27/dlt-1.24.0-py3-none-any.whl", hash = "sha256:ae270eefe54a42d662507ec52a9b3c0608eedd6e297f2c9f02f0f95689da2e03", size = 1211749, upload-time = "2026-03-19T11:41:53.358Z" },
 ]
 
 [package.optional-dependencies]
@@ -369,19 +369,19 @@ workspace = [
 
 [[package]]
 name = "dlt-runtime"
-version = "0.23.0"
+version = "0.24.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "cron-descriptor" },
     { name = "httpx" },
     { name = "pathspec" },
-    { name = "python-jose" },
+    { name = "pyjwt" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/db/d3ddaae64a5d5489fd817004f383de8d7660a523b39a76d1dd4735216f94/dlt_runtime-0.23.0.tar.gz", hash = "sha256:a82ce30fe33dab4fd8ace76e713495ac38be0374cc2523cb812a9db157c09adc", size = 70440, upload-time = "2026-03-17T09:01:59.092Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/07/0ec72fd171dd0fabcbd9a2cec0fd2a7d44aad8c4cdd803532380f91ba785/dlt_runtime-0.24.0.tar.gz", hash = "sha256:ac7404bc59c395e76a5edac1cdef49e41dfa0227553c274ddb1bc9ed8a2737cb", size = 76203, upload-time = "2026-04-07T09:31:01.627Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/25/5da3e143af312dd45c8c0e3461a5e28a33bed11dd619b59a20fbb3bfbe95/dlt_runtime-0.23.0-py3-none-any.whl", hash = "sha256:ccb14cc528c1b671ba41a8ad339d943785b2d7da73423606bff88564da93236c", size = 181539, upload-time = "2026-03-17T09:01:57.6Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/26/feda4f16cbfb1fa14cd6938415d445aaecee953918f757bbf3add2954935/dlt_runtime-0.24.0-py3-none-any.whl", hash = "sha256:d57f4f9181dd88b998c3e122d4027bff75a1fce773c9ddc2cd04e90de99c913b", size = 197036, upload-time = "2026-04-07T09:31:00.4Z" },
 ]
 
 [[package]]
@@ -1509,11 +1509,11 @@ wheels = [
 
 [[package]]
 name = "pyjwt"
-version = "2.11.0"
+version = "2.12.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5c/5a/b46fa56bf322901eee5b0454a34343cdbdae202cd421775a8ee4e42fd519/pyjwt-2.11.0.tar.gz", hash = "sha256:35f95c1f0fbe5d5ba6e43f00271c275f7a1a4db1dab27bf708073b75318ea623", size = 98019, upload-time = "2026-01-30T19:59:55.694Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/27/a3b6e5bf6ff856d2509292e95c8f57f0df7017cf5394921fc4e4ef40308a/pyjwt-2.12.1.tar.gz", hash = "sha256:c74a7a2adf861c04d002db713dd85f84beb242228e671280bf709d765b03672b", size = 102564, upload-time = "2026-03-13T19:27:37.25Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/01/c26ce75ba460d5cd503da9e13b21a33804d38c2165dec7b716d06b13010c/pyjwt-2.11.0-py3-none-any.whl", hash = "sha256:94a6bde30eb5c8e04fee991062b534071fd1439ef58d2adc9ccb823e7bcd0469", size = 28224, upload-time = "2026-01-30T19:59:54.539Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/7a/8dd906bd22e79e47397a61742927f6747fe93242ef86645ee9092e610244/pyjwt-2.12.1-py3-none-any.whl", hash = "sha256:28ca37c070cad8ba8cd9790cd940535d40274d22f80ab87f3ac6a713e6e8454c", size = 29726, upload-time = "2026-03-13T19:27:35.677Z" },
 ]
 
 [package.optional-dependencies]
@@ -1889,7 +1889,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dlt", extras = ["motherduck", "workspace", "hub"], specifier = ">=1.22.1" },
-    { name = "dlt-runtime", specifier = "==0.23.0" },
+    { name = "dlt-runtime", specifier = "==0.24.0" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "marimo", specifier = ">=0.19.0" },
     { name = "numpy", specifier = ">=2.3.5" },
