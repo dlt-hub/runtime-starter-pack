@@ -3,10 +3,10 @@ log_level="WARNING"
 dlthub_telemetry = true
 api_base_url = "https://dlthub.test/api/api"
 auth_base_url = "https://dlthub.test/api/auth"
-workspace_id = "11690b2b-0a37-4a23-b944-28cf463fb051"
+workspace_id = "3936e510-59c6-46ba-ad15-de7e91f93e39"
 
 [destination.jaffleshop_transformation_destination]
 destination_type="duckdb"
 
 [jobs.jaffle_mcp.mcp]
-transport = "sse"
+transport = "http"

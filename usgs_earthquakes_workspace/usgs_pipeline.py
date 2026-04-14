@@ -11,6 +11,8 @@ Jobs:
     clock                  -- detached 1-minute heartbeat
 """
 
+from datetime import timezone
+
 import dlt
 from dlt.common import pendulum
 from dlt.hub import run
@@ -25,18 +27,21 @@ usgs_ing_pipeline = dlt.pipeline(
     pipeline_name="usgs_ingest_pipeline",
     destination="pokeland",
     dataset_name="usgs_data",
+    progress="log",
 )
 
 usgs_eq_stats_pipeline = dlt.pipeline(
     pipeline_name="usgs_earthquake_stats_pipeline",
     destination="pokeland",
     dataset_name="usgs_data",
+    progress="log",
 )
 
 usgs_feeds_classified_pipeline = dlt.pipeline(
     pipeline_name="usgs_feeds_classified_pipeline",
     destination="pokeland",
     dataset_name="usgs_data",
+    progress="log",
 )
 
 
@@ -45,6 +50,7 @@ def _load_ingest(resources):
     source = usgs_source().with_resources(*resources)
     load_info = usgs_ing_pipeline.run(source)
     print(load_info)
+    print(usgs_ing_pipeline.last_trace.last_normalize_info)
 
 
 # ── Ingestion jobs ───────────────────────────────────────────────────
@@ -55,12 +61,14 @@ def _load_ingest(resources):
     expose={"tags": ["backfill"], "display_name": "USGS backfill cascade"},
     refresh="always",
 )
-def backfill_usgs(run_context: TJobRunContext):
+def backfill_usgs(epoch = USGS_EPOCH):
     """Backfill historical earthquake catalog and refresh the significant feed.
 
     refresh="always" means every successful run cascades a refresh signal to
     all downstream jobs, clearing their prev_completed_run watermarks.
     """
+    # TODO: implement - here a POC of setting different epoch in dev and production
+    print("starting from epoch:", epoch)
     usgs_ing_pipeline.refresh = "drop_sources"
     _load_ingest(["earthquakes", "feeds_summary"])
 
@@ -71,7 +79,7 @@ def backfill_usgs(run_context: TJobRunContext):
     freshness=backfill_usgs.is_fresh,
     name="usgs_daily_load",
 )
-def usgs_daily(run_context: TJobRunContext):
+def usgs_daily():
     """Incremental load of new earthquakes plus refresh of the significant feed.
 
     Gated on backfill freshness: won't fire until backfill has completed at
@@ -95,6 +103,9 @@ def transform_earthquakes(run_context: TJobRunContext):
     Restores the upstream incremental cursor and passes the time window to the
     Ibis transformation. On refresh, processes the full catalog instead.
     """
+    # NOTE: relying on upstream incremental is not fully sound - upstream can run twice
+    # move the incremental and we lost a range. an independent incremental should be defined
+    # on transformation resource. this is not implemented yet.
     incremental = restore_incremental(
         usgs_ing_pipeline,
         usgs_source().earthquakes,
@@ -111,8 +122,14 @@ def transform_earthquakes(run_context: TJobRunContext):
     if run_context["refresh"]:
         usgs_eq_stats_pipeline.refresh = "drop_resources"
         time_window = None
+        print("INCREMENTAL STATE DROPPED - FULLL REFRESH")
     else:
-        time_window = (incremental.start_value, incremental.last_value)
+        # TODO: increental should be frozen - use cache state via property
+        # normalize pendulum DateTime to plain UTC datetime so Ibis emits
+        start = incremental.start_value.replace(tzinfo=timezone.utc)
+        end = incremental._cached_state["last_value"].replace(tzinfo=timezone.utc)
+        time_window = (start, end)
+        print(f"INCREMENTAL STATE FOUND: {time_window}")
 
     load_info = usgs_eq_stats_pipeline.run(
         earthquake_daily_stats(usgs_ing_pipeline.dataset(), time_window)
@@ -147,4 +164,4 @@ def clock():
 
 
 if __name__ == "__main__":
-    backfill_usgs({"run_id": "local", "trigger": "manual:", "refresh": True})
+    transform_earthquakes({"refresh": False})

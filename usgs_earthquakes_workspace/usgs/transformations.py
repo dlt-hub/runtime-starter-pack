@@ -41,7 +41,7 @@ def earthquake_daily_stats(
         eq.mutate(
             day=eq.time.cast("date"),
             region=ibis.coalesce(
-                eq.place.split(", ").get(-1).nullif(""),
+                eq.place.split(", ")[-1].nullif(""),
                 ibis.literal("Unknown"),
             ),
         )
@@ -79,7 +79,7 @@ def feeds_summary_classified(dataset: dlt.Dataset) -> typing.Iterator[ir.Table]:
             else_="minor",
         ),
         region=ibis.coalesce(
-            fs.place.split(", ").get(-1).nullif(""),
+            fs.place.split(", ")[-1].nullif(""),
             ibis.literal("Unknown"),
         ),
     )

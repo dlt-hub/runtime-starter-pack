@@ -7,11 +7,10 @@ dependencies = [
     "dlt[motherduck,workspace]",
     "dlthub",
     "duckdb<1.4.3",
-    "dlt-runtime",
     "marimo>=0.19.0",
 ]
 
 [tool.uv.sources]
 # dlt = { path = "../../dlt", editable = true }
-dlt = { url="https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=7"}
+dlt = { url="https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8"}
 # dlt-runtime = { path = "../../runtime/cli", editable = true }
