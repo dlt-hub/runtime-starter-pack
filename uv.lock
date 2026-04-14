@@ -354,7 +354,7 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { hash = "sha256:8501e8fd8c14111e971f221b9a1651a4045ad2091649371b0e002c4e52b36fff" }
+sdist = { hash = "sha256:c07c2078f2672dc40b4722cbd2da670f0d652cbf2677c0ee96a0239694bc16e1" }
 
 [package.optional-dependencies]
 motherduck = [
