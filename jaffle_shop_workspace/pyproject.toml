@@ -1,0 +1,15 @@
+[project]
+name = "jaffle-shop-workspace"
+version = "0.1.0"
+description = "Jaffle Shop workspace with connected ingest and transform pipelines"
+requires-python = ">=3.12"
+dependencies = [
+    "dlt[motherduck,workspace,hub]",
+    "dlthub",
+    "duckdb<1.4.3",
+    "dlt-runtime",
+    "fastmcp",
+]
+
+[tool.uv.sources]
+dlt = { url="https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=7"}

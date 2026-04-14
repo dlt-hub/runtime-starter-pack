@@ -1,0 +1,651 @@
+{
+  "version": 2,
+  "version_hash": "zV1NdRd36iTdMs8evh926qWSnZsQV0+MpelVcVZbDik=",
+  "engine_version": 11,
+  "name": "github_rest_api_source",
+  "tables": {
+    "_dlt_version": {
+      "name": "_dlt_version",
+      "columns": {
+        "version": {
+          "name": "version",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "engine_version": {
+          "name": "engine_version",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "inserted_at": {
+          "name": "inserted_at",
+          "data_type": "timestamp",
+          "nullable": false
+        },
+        "schema_name": {
+          "name": "schema_name",
+          "data_type": "text",
+          "nullable": false
+        },
+        "version_hash": {
+          "name": "version_hash",
+          "data_type": "text",
+          "nullable": false
+        },
+        "schema": {
+          "name": "schema",
+          "data_type": "text",
+          "nullable": false
+        }
+      },
+      "write_disposition": "skip",
+      "resource": "_dlt_version",
+      "description": "Created by DLT. Tracks schema updates"
+    },
+    "_dlt_loads": {
+      "name": "_dlt_loads",
+      "columns": {
+        "load_id": {
+          "name": "load_id",
+          "data_type": "text",
+          "nullable": false,
+          "precision": 64
+        },
+        "schema_name": {
+          "name": "schema_name",
+          "data_type": "text",
+          "nullable": true
+        },
+        "status": {
+          "name": "status",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "inserted_at": {
+          "name": "inserted_at",
+          "data_type": "timestamp",
+          "nullable": false
+        },
+        "schema_version_hash": {
+          "name": "schema_version_hash",
+          "data_type": "text",
+          "nullable": true
+        }
+      },
+      "write_disposition": "skip",
+      "resource": "_dlt_loads",
+      "description": "Created by DLT. Tracks completed loads"
+    },
+    "commits": {
+      "columns": {
+        "sha": {
+          "name": "sha",
+          "data_type": "text",
+          "nullable": true
+        },
+        "node_id": {
+          "name": "node_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "url": {
+          "name": "url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "html_url": {
+          "name": "html_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "comments_url": {
+          "name": "comments_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__login": {
+          "name": "committer__login",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__id": {
+          "name": "committer__id",
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "committer__node_id": {
+          "name": "committer__node_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__avatar_url": {
+          "name": "committer__avatar_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__gravatar_id": {
+          "name": "committer__gravatar_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__url": {
+          "name": "committer__url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__html_url": {
+          "name": "committer__html_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__followers_url": {
+          "name": "committer__followers_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__following_url": {
+          "name": "committer__following_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__gists_url": {
+          "name": "committer__gists_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__starred_url": {
+          "name": "committer__starred_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__subscriptions_url": {
+          "name": "committer__subscriptions_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__organizations_url": {
+          "name": "committer__organizations_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__repos_url": {
+          "name": "committer__repos_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__events_url": {
+          "name": "committer__events_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__received_events_url": {
+          "name": "committer__received_events_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__type": {
+          "name": "committer__type",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__user_view_type": {
+          "name": "committer__user_view_type",
+          "data_type": "text",
+          "nullable": true
+        },
+        "committer__site_admin": {
+          "name": "committer__site_admin",
+          "data_type": "bool",
+          "nullable": true
+        },
+        "author__login": {
+          "name": "author__login",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__id": {
+          "name": "author__id",
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "author__node_id": {
+          "name": "author__node_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__avatar_url": {
+          "name": "author__avatar_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__gravatar_id": {
+          "name": "author__gravatar_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__url": {
+          "name": "author__url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__html_url": {
+          "name": "author__html_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__followers_url": {
+          "name": "author__followers_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__following_url": {
+          "name": "author__following_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__gists_url": {
+          "name": "author__gists_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__starred_url": {
+          "name": "author__starred_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__subscriptions_url": {
+          "name": "author__subscriptions_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__organizations_url": {
+          "name": "author__organizations_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__repos_url": {
+          "name": "author__repos_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__events_url": {
+          "name": "author__events_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__received_events_url": {
+          "name": "author__received_events_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__type": {
+          "name": "author__type",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__user_view_type": {
+          "name": "author__user_view_type",
+          "data_type": "text",
+          "nullable": true
+        },
+        "author__site_admin": {
+          "name": "author__site_admin",
+          "data_type": "bool",
+          "nullable": true
+        },
+        "commit__message": {
+          "name": "commit__message",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__url": {
+          "name": "commit__url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__comment_count": {
+          "name": "commit__comment_count",
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "commit__verification__verified": {
+          "name": "commit__verification__verified",
+          "data_type": "bool",
+          "nullable": true
+        },
+        "commit__verification__reason": {
+          "name": "commit__verification__reason",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__verification__signature": {
+          "name": "commit__verification__signature",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__verification__payload": {
+          "name": "commit__verification__payload",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__verification__verified_at": {
+          "name": "commit__verification__verified_at",
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "commit__tree__sha": {
+          "name": "commit__tree__sha",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__tree__url": {
+          "name": "commit__tree__url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__committer__name": {
+          "name": "commit__committer__name",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__committer__email": {
+          "name": "commit__committer__email",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__committer__date": {
+          "name": "commit__committer__date",
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "commit__author__name": {
+          "name": "commit__author__name",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__author__email": {
+          "name": "commit__author__email",
+          "data_type": "text",
+          "nullable": true
+        },
+        "commit__author__date": {
+          "name": "commit__author__date",
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "_dlt_load_id": {
+          "name": "_dlt_load_id",
+          "data_type": "text",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "name": "_dlt_id",
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "write_disposition": "replace",
+      "name": "commits",
+      "resource": "commits",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "contributors": {
+      "columns": {
+        "login": {
+          "name": "login",
+          "data_type": "text",
+          "nullable": true
+        },
+        "id": {
+          "name": "id",
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "node_id": {
+          "name": "node_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "gravatar_id": {
+          "name": "gravatar_id",
+          "data_type": "text",
+          "nullable": true
+        },
+        "url": {
+          "name": "url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "html_url": {
+          "name": "html_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "followers_url": {
+          "name": "followers_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "following_url": {
+          "name": "following_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "gists_url": {
+          "name": "gists_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "starred_url": {
+          "name": "starred_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "subscriptions_url": {
+          "name": "subscriptions_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "organizations_url": {
+          "name": "organizations_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "repos_url": {
+          "name": "repos_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "events_url": {
+          "name": "events_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "received_events_url": {
+          "name": "received_events_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "type": {
+          "name": "type",
+          "data_type": "text",
+          "nullable": true
+        },
+        "user_view_type": {
+          "name": "user_view_type",
+          "data_type": "text",
+          "nullable": true
+        },
+        "site_admin": {
+          "name": "site_admin",
+          "data_type": "bool",
+          "nullable": true
+        },
+        "contributions": {
+          "name": "contributions",
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "_dlt_load_id": {
+          "name": "_dlt_load_id",
+          "data_type": "text",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "name": "_dlt_id",
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "write_disposition": "replace",
+      "name": "contributors",
+      "resource": "contributors",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "_dlt_pipeline_state": {
+      "columns": {
+        "version": {
+          "name": "version",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "engine_version": {
+          "name": "engine_version",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "pipeline_name": {
+          "name": "pipeline_name",
+          "data_type": "text",
+          "nullable": false
+        },
+        "state": {
+          "name": "state",
+          "data_type": "text",
+          "nullable": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "data_type": "timestamp",
+          "nullable": false
+        },
+        "version_hash": {
+          "name": "version_hash",
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_load_id": {
+          "name": "_dlt_load_id",
+          "data_type": "text",
+          "nullable": false,
+          "precision": 64
+        },
+        "_dlt_id": {
+          "name": "_dlt_id",
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "write_disposition": "append",
+      "file_format": "preferred",
+      "name": "_dlt_pipeline_state",
+      "resource": "_dlt_pipeline_state",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "commits__parents": {
+      "name": "commits__parents",
+      "columns": {
+        "sha": {
+          "name": "sha",
+          "data_type": "text",
+          "nullable": true
+        },
+        "url": {
+          "name": "url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "html_url": {
+          "name": "html_url",
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "name": "_dlt_parent_id",
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "name": "_dlt_list_idx",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "name": "_dlt_id",
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "commits",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    }
+  },
+  "settings": {
+    "detections": [
+      "iso_timestamp"
+    ],
+    "default_hints": {
+      "not_null": [
+        "_dlt_id",
+        "_dlt_root_id",
+        "_dlt_parent_id",
+        "_dlt_list_idx",
+        "_dlt_load_id"
+      ],
+      "parent_key": [
+        "_dlt_parent_id"
+      ],
+      "root_key": [
+        "_dlt_root_id"
+      ],
+      "unique": [
+        "_dlt_id"
+      ],
+      "row_key": [
+        "_dlt_id"
+      ]
+    }
+  },
+  "normalizers": {
+    "names": "snake_case",
+    "json": {
+      "module": "dlt.common.normalizers.json.relational"
+    }
+  },
+  "previous_hashes": [
+    "VLGQ3SxlP8+dSjNohekLMUbXXpyI6Onab+zsumw+2O8=",
+    "vWIAFWfeAJx4Br9LaPljFRrcyVTcL9MY8BPPm9LQzo4="
+  ]
+}

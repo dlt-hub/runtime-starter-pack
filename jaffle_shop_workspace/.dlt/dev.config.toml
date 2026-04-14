@@ -1,0 +1,2 @@
+[destination.jaffleshop_transformation_destination]
+destination_type="duckdb"

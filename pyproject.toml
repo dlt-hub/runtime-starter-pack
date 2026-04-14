@@ -5,13 +5,20 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "dlt[motherduck,workspace,hub]>=1.22.1",
+    "dlt[motherduck,workspace]",
+    "dlthub",
     # motherduck does not work with 1.4.3
     "duckdb<1.4.3",
-    "dlt-runtime==0.24.0",
+    "dlt-runtime",
     "numpy>=2.3.5",
     "pyarrow-hotfix>=0.7",
     "openai>=1.0.0",
     "marimo>=0.19.0",
     "pyzmq>=27.1.0",
 ]
+
+[tool.uv.sources]
+# dlt = { path = "../dlt", editable = true }
+# dlt = { git = "https://github.com/dlt-hub/dlt.git", rev = "feat/workspace-manifest-concept" }
+#dlt = { url="https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-manifest-concept.zip"}
+dlt = { url="https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip"}

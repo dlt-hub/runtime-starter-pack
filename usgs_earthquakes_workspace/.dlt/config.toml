@@ -1,0 +1,8 @@
+[runtime]
+log_level="WARNING"
+dlthub_telemetry = true
+api_base_url = "https://dlthub.test/api/api"
+auth_base_url = "https://dlthub.test/api/auth"
+
+[destination.pokeland]
+destination_type="duckdb"
