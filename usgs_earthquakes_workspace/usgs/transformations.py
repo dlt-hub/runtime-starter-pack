@@ -7,6 +7,7 @@ the same physical destination, dlt runs the query in-warehouse.
 
 import typing
 from typing import Optional, Tuple
+from datetime import timezone
 
 import dlt
 import ibis
@@ -35,6 +36,9 @@ def earthquake_daily_stats(
 
     if time_window is not None:
         start, end = time_window
+        # always use utc - this is how data in database tables will be stored
+        start = start.astimezone(timezone.utc)
+        end = end.astimezone(timezone.utc)
         eq = eq.filter((eq.time >= start) & (eq.time <= end))
 
     yield (

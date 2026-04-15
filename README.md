@@ -826,26 +826,27 @@ the entire pipeline graph.
 
 This workspace ingests real-time earthquake data from the USGS, transforms it
 into analytics tables, and ships a dashboard. It demonstrates dlt's most
-advanced deployment features: incremental loading with cursor pushdown, freshness
-constraints between jobs, backfill with refresh cascade, and dependency groups
-for per-job package requirements.
+advanced deployment features: **scheduler-driven intervals** (pipelines receive
+start/end bounds from Runtime instead of persisting their own cursor state),
+freshness constraints between jobs, a backfill job that cascades a refresh
+signal without loading data, dependency groups, and timezone-aware cron
+scheduling.
 
 ### What's inside
 
 ```
 usgs_earthquakes_workspace/
   usgs/
-    __init__.py               # dlt source: earthquakes (incremental) + feeds_summary (replace)
+    __init__.py               # stateless dlt source: takes (interval_start, interval_end)
     settings.py               # API URLs and constants
     transformations.py        # Ibis transformations: daily stats + severity classification
-  usgs_pipeline.py            # 5 jobs: backfill, daily, 2 transforms, clock
+  usgs_pipeline.py            # 5 jobs: backfill (cascade + setup), daily, 2 transforms, clock
   usgs_dashboard.py           # marimo dashboard with 6 charts
-  utils.py                    # restore_incremental helper
   __deployment__.py
   pyproject.toml
   .dlt/
     config.toml
-    dev.config.toml
+    dev.config.toml           # epoch + destination for dev
     prod.config.toml
     access.config.toml
 ```
@@ -853,15 +854,15 @@ usgs_earthquakes_workspace/
 ### The job graph
 
 ```
-backfill_usgs (manual, refresh="always")
-  ══╦══> usgs_daily (cron */3 + followup, freshness gate)
+backfill_usgs (manual, cascade + setup only)
+  ══╦══> usgs_daily (cron */3 + followup, freshness gate, scheduler interval)
     ║      ┆
     ║      ┆ freshness: usgs_daily.is_fresh
     ║      ┆
-    ║      ├╌╌╌> transform_earthquakes (every 5m, incremental)
+    ║      ├╌╌╌> transform_earthquakes (every 5m, scheduler interval)
     ║      └╌╌╌> transform_feeds_summary (every 5m, replace)
     ║
-clock (detached 5-minute heartbeat)
+clock (detached 1-minute heartbeat)
 ```
 
 - **Solid arrow** (`══>`) is a trigger + freshness gate: the daily job fires on
@@ -871,42 +872,141 @@ clock (detached 5-minute heartbeat)
   own 5-minute cron but wait until the most recent ingest interval is complete
   before processing. This prevents transforms from observing half-loaded data.
 
-### Incremental loading
+### Stateless incremental source
 
-The `earthquakes` resource uses `dlt.sources.incremental` to track where it
-left off between runs:
+The `earthquakes` source is a function of `(interval_start, interval_end)`.
+It holds no cursor state between runs -- the bounds are passed in explicitly
+by the caller, never read from `pipeline.state`:
 
 ```python
-@dlt.resource(write_disposition="merge", primary_key="id")
-def earthquakes(
-    time: dlt.sources.incremental[pendulum.DateTime] = dlt.sources.incremental(
+@dlt.source
+def source(interval_start: datetime, interval_end: datetime):
+    incremental_interval = dlt.sources.incremental(
         "time",
-        initial_value=USGS_EPOCH,
+        initial_value=interval_start,
+        end_value=interval_end,
         range_end="closed",
-    ),
-) -> Iterable[TDataItem]:
-    params = {
-        "starttime": time.start_value.to_iso8601_string(),
-        ...
-    }
+    )
+
+    @dlt.resource(write_disposition="merge", primary_key="id")
+    def earthquakes(
+        time: dlt.sources.incremental[datetime] = incremental_interval,
+    ) -> Iterable[TDataItem]:
+        params = {
+            "starttime": time.start_value.isoformat(),
+            "minmagnitude": MIN_MAGNITUDE,
+        }
+        if time.end_value is not None:
+            params["endtime"] = time.end_value.isoformat()
+        payload = requests.get(FDSN_EVENT_URL, params=params).json()
+        for feature in payload.get("features", []):
+            yield _flatten_feature(feature)
+
+    return [earthquakes, feeds_summary]
 ```
 
-Key details:
+What each piece does:
 
-- **Cursor type is `pendulum.DateTime`** (not `str`). This drives how the
-  cursor values are used in downstream Ibis filters -- they remain typed
-  timestamps, not strings.
-- **Cursor pushdown**: `time.start_value` and `time.end_value` are passed
-  directly to the FDSN API as `starttime`/`endtime`, so only the needed
-  slice is fetched.
-- **`merge` + `primary_key="id"`**: earthquake records can be revised by USGS.
-  Merge-by-id updates existing rows in place.
+- **`initial_value` + `end_value` both set**: binds the incremental window to
+  the caller-supplied bounds. Because both endpoints are pinned, dlt does not
+  fall back to pipeline state.
 - **`range_end="closed"`**: both endpoints inclusive, matching the FDSN
-  service's own `endtime` semantics.
+  service's own inclusive `endtime` semantics.
+- **Cursor pushdown**: `time.start_value` / `time.end_value` feed straight
+  into the FDSN API as `starttime` / `endtime` query params, so only the
+  requested slice is fetched from the server -- no over-fetch, no
+  client-side filtering.
+- **`merge` + `primary_key="id"`**: earthquake records can be revised by
+  USGS. Merge-by-id updates existing rows in place so replaying overlapping
+  windows stays idempotent.
 
-The `feeds_summary` resource is the opposite: `write_disposition="replace"` with
-no cursor. The "significant events of the past 30 days" feed is a small snapshot
-rebuilt each run.
+**Why stateless matters:** every run is a pure function of its inputs. That
+opens the door to future parallel backfills (multiple workers processing
+different slices concurrently, no cursor contention) and makes every run
+easy to reason about and safe to re-run.
+
+The `feeds_summary` resource is the opposite: `write_disposition="replace"`
+with no cursor. The "significant events of the past 30 days" feed is a
+small snapshot rebuilt on every run.
+
+### Scheduler-driven intervals
+
+When Runtime fires a scheduled job, it populates `run_context` with the
+`[interval_start, interval_end]` window the job should process:
+
+- **Normal run**: the window covers the cron tick that just elapsed. If the
+  job missed previous ticks (downtime, freshness gate blocking, ...), the
+  scheduler **extends** `interval_start` back to where the last successful
+  run ended. Windows are always continuous -- no gaps, no dropped data.
+- **Refresh run** (`run_context["refresh"] == True`): the job overrides
+  `interval_start` with the configured `epoch` so the full history gets
+  reprocessed.
+
+Here's `usgs_daily`:
+
+```python
+@run.pipeline(
+    usgs_ing_pipeline,
+    trigger=["*/3 * * * *", backfill_usgs.success],
+    freshness=backfill_usgs.is_fresh,
+    require={"timezone": "Europe/Berlin"},
+    name="usgs_daily_load",
+)
+def usgs_daily(run_context: TJobRunContext, epoch: str = USGS_EPOCH):
+    if run_context["refresh"]:
+        usgs_ing_pipeline.refresh = "drop_sources"
+        run_context["interval_start"] = datetime.fromisoformat(epoch)
+
+    _load_ingest(
+        run_context["interval_start"],
+        run_context["interval_end"],
+        ["earthquakes", "feeds_summary"],
+    )
+```
+
+No state lookups, no cursor restoration, no SQL filter rendering. The
+scheduler hands over the window; the job forwards it to the stateless
+source.
+
+### Module-level job config
+
+`epoch` is a function parameter with `USGS_EPOCH` as its default. dlt injects
+the value from config at call time using the standard `[jobs.<section>.<name>]`
+layout -- but you can also **omit the name** to configure every job in a
+module at once. One section, many jobs:
+
+```toml
+# .dlt/dev.config.toml
+[jobs.usgs_pipeline]
+epoch = "2026-04-05T00:00:00+00:00"
+```
+
+`usgs_pipeline` is the module name. Every decorated function defined in
+`usgs_pipeline.py` -- `backfill_usgs`, `usgs_daily`, `transform_earthquakes`,
+`transform_feeds_summary` -- picks up this `epoch` unless a per-job section
+(`[jobs.usgs_pipeline.usgs_daily]`) overrides it. Different profiles can
+declare different epochs by dropping the same section into
+`prod.config.toml` or `access.config.toml`.
+
+See the "Job configuration via `dlt.config.value`" subsection in the
+Reference for the general pattern.
+
+### Timezone
+
+`usgs_daily` declares `require={"timezone": "Europe/Berlin"}`. This tells
+Runtime to interpret the job's cron expressions in that IANA timezone --
+`*/3 * * * *` still ticks every 3 minutes, but midnight-based cron
+expressions (`0 0 * * *`) fire at midnight Berlin time rather than UTC.
+
+The scheduler's `interval_start` / `interval_end` are **UTC datetimes** in
+`run_context`, but they align to tick boundaries in the declared timezone.
+So a daily job with `timezone="Europe/Berlin"` and cron `0 0 * * *` receives
+intervals like `[2026-04-13T22:00:00Z, 2026-04-14T22:00:00Z]` during
+daylight saving -- the Berlin midnight.
+
+Set `timezone` on every scheduled job that cares about local-time ticks;
+transforms in this workspace declare the same Berlin timezone for the same
+reason. See the Reference for the full list of `require` options.
 
 ### Freshness constraints
 
