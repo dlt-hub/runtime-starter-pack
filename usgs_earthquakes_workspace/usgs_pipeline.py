@@ -1,12 +1,13 @@
 """USGS earthquake ingestion and transformation pipeline.
 
-Demonstrates incremental loading, freshness constraints, backfill with
-refresh cascade, and dependency groups for transform jobs.
+Demonstrates scheduler-driven intervals, freshness constraints, a backfill
+that cascades a refresh signal without loading data, dependency groups, and
+timezone-aware cron scheduling.
 
 Jobs:
-    backfill_usgs          -- manual, refresh="always", full re-ingest from epoch
-    usgs_daily             -- cron + backfill followup, gated on backfill freshness
-    transform_earthquakes  -- cron, gated on daily freshness, restores incremental
+    backfill_usgs          -- manual, refresh="always"; cascade originator + initial setup, loads no data
+    usgs_daily             -- cron + backfill followup, scheduler-driven interval, refresh overrides start with epoch
+    transform_earthquakes  -- cron, gated on daily freshness, consumes run_context interval
     transform_feeds_summary-- cron, gated on daily freshness, replace transform
     clock                  -- detached 1-minute heartbeat
 """
@@ -60,10 +61,15 @@ def _load_ingest(interval_start: datetime, interval_end: datetime, resources):
     refresh="always",
 )
 def backfill_usgs(epoch = USGS_EPOCH):
-    """Backfill historical earthquake catalog and refresh the significant feed.
+    """Cascade a refresh signal to every downstream job and do initial setup.
 
-    refresh="always" means every successful run cascades a refresh signal to
-    all downstream jobs, clearing their prev_completed_run watermarks.
+    `refresh="always"` makes every successful run clear `prev_completed_run`
+    on all reachable downstream jobs, so their next run starts with
+    `run_context["refresh"] = True` and reprocesses from `epoch`.
+
+    This job does NOT load any data -- it is the cascade originator and the
+    place to run one-shot setup (drop sources, initialize destination schema,
+    warm caches, etc.). The actual re-ingest happens on downstream jobs.
     """
     print("CLEANING UP FOR EPOCH", epoch)
 
@@ -75,18 +81,24 @@ def backfill_usgs(epoch = USGS_EPOCH):
     require={"timezone": "Europe/Berlin"}
 )
 def usgs_daily(run_context: TJobRunContext, epoch = USGS_EPOCH):
-    """Incremental load of new earthquakes plus refresh of the significant feed.
+    """Load earthquakes + refresh the significant feed for the scheduler interval.
+
+    `run_context["interval_start"]` / `interval_end` are supplied by the
+    Runtime scheduler based on the cron trigger. The scheduler keeps
+    intervals continuous: if prior ticks were missed (freshness gate, app
+    downtime, ...) it extends the window back to the last successful end so
+    no data is dropped.
+
+    On refresh (cascade from `backfill_usgs`), we drop the source tables and
+    override `interval_start` with `epoch` so the full history re-ingests.
 
     Gated on backfill freshness: won't fire until backfill has completed at
     least once. After that, runs every 3 minutes on its own cron schedule.
     """
-
-    # NOTE: interval is provided by runtime scheduler. it corresponds to the latest elapsed schedule: or every: period
-    # scheduler makes sure that interval is continuous - missing daily loads will be backfilled (interval will be extended)
     if run_context["refresh"]:
-        # drop all tables
+        # wipe source tables; the stateless source has no cursor to clear
         usgs_ing_pipeline.refresh = "drop_sources"
-        # set epoch as interval start: we do not have decorator interval implemented yet
+        # scheduler-supplied start is ignored on refresh -- start from epoch
         run_context["interval_start"] = datetime.fromisoformat(epoch)
     
     print("job context with applied epoch", run_context)
@@ -102,12 +114,15 @@ def usgs_daily(run_context: TJobRunContext, epoch = USGS_EPOCH):
     trigger=trigger.every("5m"),
     freshness=[usgs_daily.is_fresh],
     require={"dependency_groups": ["ibis"], "timezone": "Europe/Berlin"},
+    expose={"tags": ["transform"]},
 )
 def transform_earthquakes(run_context: TJobRunContext, epoch = USGS_EPOCH):
-    """Aggregate the freshly-loaded earthquake slice into daily/region stats.
+    """Aggregate the earthquake slice into daily/region stats for the scheduler interval.
 
-    Restores the upstream incremental cursor and passes the time window to the
-    Ibis transformation. On refresh, processes the full catalog instead.
+    Consumes `run_context["interval_start"]` / `interval_end` directly -- no
+    cursor state, no upstream-pipeline lookup. On refresh, drops the output
+    table and overrides `interval_start` with `epoch` to re-aggregate the
+    full history.
     """
 
     if run_context["refresh"]:
@@ -130,6 +145,7 @@ def transform_earthquakes(run_context: TJobRunContext, epoch = USGS_EPOCH):
     trigger=trigger.every("5m"),
     freshness=[usgs_daily.is_fresh],
     require={"dependency_groups": ["ibis"], "timezone": "Europe/Berlin"},
+    expose={"tags": ["transform"]},
 )
 def transform_feeds_summary(run_context: TJobRunContext):
     """Rebuild the classified significant-events feed (replace, no incremental)."""

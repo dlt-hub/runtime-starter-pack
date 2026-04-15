@@ -29,7 +29,8 @@ def earthquake_daily_stats(
 
     Args:
         dataset: the ingestion dataset containing the `earthquakes` table.
-        time_window: optional (start, end) bounds from the upstream incremental.
+        time_window: optional (start, end) bounds; typically the scheduler
+            interval from `run_context["interval_start"]`/`interval_end`.
             When None, all rows are included (full rebuild on refresh).
     """
     eq = dataset.table("earthquakes").to_ibis()

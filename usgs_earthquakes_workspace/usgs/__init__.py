@@ -1,8 +1,12 @@
 """
 USGS Earthquake source — public, no-auth feed of seismic events from USGS.
 
+Stateless: the source is a function of `(interval_start, interval_end)`.
+No cursor state is read from or written to `pipeline.state` — the caller
+(typically Runtime's scheduler via `run_context`) supplies the window.
+
 Available resources:
-    earthquakes      — incremental on event `time` (ISO 8601, ascending)
+    earthquakes      — window-bound on event `time`, merge by `id`
     feeds_summary    — replace; significant events from the past 30 days
 """
 
@@ -49,9 +53,15 @@ def _flatten_feature(feature: Dict[str, Any]) -> Dict[str, Any]:
 
 @dlt.source
 def source(interval_start: datetime, interval_end: datetime) -> Sequence[DltResource]:
-    """USGS Earthquake source returning all available resources."""
+    """USGS Earthquake source returning all available resources.
 
-    # NOTE: we set both initial and end value - this avoids using pipeline state
+    `interval_start` and `interval_end` define the time window to fetch.
+    They are typically the scheduler's `run_context["interval_start"]` /
+    `interval_end`, but any caller-supplied bounds work.
+    """
+
+    # Both initial_value and end_value are pinned to caller-supplied bounds,
+    # so dlt does not fall back to pipeline state — the source is stateless.
     incremental_interval = dlt.sources.incremental(
         "time",
         initial_value=interval_start,
@@ -63,10 +73,12 @@ def source(interval_start: datetime, interval_end: datetime) -> Sequence[DltReso
     def earthquakes(
         time: dlt.sources.incremental[datetime] = incremental_interval,
     ) -> Iterable[TDataItem]:
-        """All M2.5+ earthquakes worldwide. Incremental on event `time` (UTC datetime).
+        """All M2.5+ earthquakes within the caller-supplied [start, end] window.
 
-        Pushes the cursor down to the FDSN service via `starttime`/`endtime`, so
-        backfills and daily loads only fetch the slice they need.
+        The cursor is bound to the outer `interval_start`/`interval_end` args
+        (not a persisted state entry). Bounds are pushed down to the FDSN
+        service via `starttime`/`endtime`, so only the needed slice is fetched.
+        Merge by `id` lets USGS event revisions update existing rows in place.
         """
         params: Dict[str, Any] = {
             "format": "geojson",

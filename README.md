@@ -1054,7 +1054,9 @@ it's responsible for reacting to that flag in its function body.
 | `refresh="auto"` (default) | Passes through if received, otherwise no-op (transparent) |
 | `refresh="block"` | Stops the signal -- downstream jobs never receive it |
 
-The backfill job is the cascade originator:
+The backfill job is the cascade originator. It does **not** load data -- its
+sole job is to fire the refresh signal and do one-shot setup (drop sources,
+initialize destination state, warm caches, etc.):
 
 ```python
 @run.pipeline(
@@ -1062,56 +1064,56 @@ The backfill job is the cascade originator:
     expose={"tags": ["backfill"], "display_name": "USGS backfill cascade"},
     refresh="always",
 )
-def backfill_usgs(run_context: TJobRunContext):
-    usgs_ing_pipeline.refresh = "drop_sources"
-    _load_ingest(["earthquakes", "feeds_summary"])
+def backfill_usgs(epoch: str = USGS_EPOCH):
+    """Cascade a refresh signal to every downstream job and do initial setup.
+    Does not load data -- downstream jobs reprocess from `epoch`."""
+    print("initial setup for epoch:", epoch)
+    # place one-shot setup here (schema init, destination warmup, ...)
 ```
 
 When backfill succeeds, Runtime clears `prev_completed_run` on all reachable
-downstream jobs (BFS walk, stopped by `block` policies). Those jobs then start
-with `run_context["refresh"] = True` and react accordingly:
+downstream jobs (BFS walk, stopped by `block` policies). Those jobs then
+start with `run_context["refresh"] = True` and react accordingly:
 
 | Job | `refresh=` | Reaction in body |
 |-----|------------|------------------|
-| `backfill_usgs` | `always` | Sets `pipeline.refresh = "drop_sources"` to wipe all tables and incremental cursor |
-| `usgs_daily` | `auto` | No-op -- backfill already dropped sources upstream |
-| `transform_earthquakes` | `auto` | Sets `pipeline.refresh = "drop_resources"` and passes `time_window=None` to rebuild from full catalog |
-| `transform_feeds_summary` | `auto` | Sets `pipeline.refresh = "drop_resources"` -- the replace transform naturally rebuilds |
+| `backfill_usgs` | `always` | Originates the cascade. One-shot setup only -- loads no data. |
+| `usgs_daily` | `auto` | Sets `pipeline.refresh = "drop_sources"` and overrides `interval_start` with `epoch` so the full history re-ingests. |
+| `transform_earthquakes` | `auto` | Sets `pipeline.refresh = "drop_resources"` and overrides `interval_start` with `epoch` so the full history re-aggregates. |
+| `transform_feeds_summary` | `auto` | Sets `pipeline.refresh = "drop_resources"`. The replace transform naturally rebuilds from the refreshed ingest data. |
 
 **Why `drop_sources` vs `drop_resources`:**
 
-- `drop_sources` (ingest) wipes all tables **and** the source-level state
-  including the incremental cursor. Next run starts at `USGS_EPOCH`.
-- `drop_resources` (transforms) drops only the transform's output table. The
-  upstream pipeline's incremental cursor is untouched, so the transform can
-  re-read it on the very next run.
+- `drop_sources` (ingest) wipes every table owned by the source **and** the
+  source-level state. For our stateless source that means just the tables --
+  there's no cursor to clear -- but the table drop ensures the next run
+  rebuilds cleanly.
+- `drop_resources` (transforms) drops only the transform's own output
+  table. Upstream ingest tables are untouched, so the transform can read
+  them on the very next run.
 
-### Incremental transforms
+### Transforms receive the same window
 
-`transform_earthquakes` doesn't have its own incremental cursor. Instead it uses
-`restore_incremental()` to read the upstream pipeline's persisted state and pass
-the time window to the Ibis transformation:
+Transform jobs don't need their own cursor or state lookup. They read the
+same `run_context["interval_start"]` / `interval_end` the ingest job saw,
+and forward it to the Ibis transformation:
 
 ```python
-incremental = restore_incremental(
-    usgs_ing_pipeline,
-    usgs_source().earthquakes,
-    dlt.sources.incremental[pendulum.DateTime](
-        "time", initial_value=USGS_EPOCH, range_end="closed",
-    ),
+@run.pipeline(
+    usgs_eq_stats_pipeline,
+    trigger=trigger.every("5m"),
+    freshness=[usgs_daily.is_fresh],
+    require={"dependency_groups": ["ibis"], "timezone": "Europe/Berlin"},
 )
-if incremental is None:
-    return  # ingestion has not run yet
+def transform_earthquakes(run_context: TJobRunContext, epoch: str = USGS_EPOCH):
+    if run_context["refresh"]:
+        usgs_eq_stats_pipeline.refresh = "drop_resources"
+        run_context["interval_start"] = datetime.fromisoformat(epoch)
 
-if run_context["refresh"]:
-    usgs_eq_stats_pipeline.refresh = "drop_resources"
-    time_window = None                    # rebuild everything
-else:
-    time_window = (incremental.start_value, incremental.last_value)
-
-usgs_eq_stats_pipeline.run(
-    earthquake_daily_stats(usgs_ing_pipeline.dataset(), time_window)
-)
+    time_window = (run_context["interval_start"], run_context["interval_end"])
+    usgs_eq_stats_pipeline.run(
+        earthquake_daily_stats(usgs_ing_pipeline.dataset(), time_window)
+    )
 ```
 
 The Ibis transformation applies the window as a filter:
@@ -1124,7 +1126,7 @@ The Ibis transformation applies the window as a filter:
 )
 def earthquake_daily_stats(
     dataset: dlt.Dataset,
-    time_window: Optional[Tuple[pendulum.DateTime, pendulum.DateTime]] = None,
+    time_window: Optional[Tuple[datetime, datetime]] = None,
 ) -> typing.Iterator[ir.Table]:
     eq = dataset.table("earthquakes").to_ibis()
     if time_window is not None:
@@ -1137,8 +1139,10 @@ def earthquake_daily_stats(
     )
 ```
 
-The `merge` disposition with `primary_key=["day", "region"]` makes overlapping
-windows idempotent -- partial-day rows on slice boundaries are updated in place.
+The `merge` disposition with `primary_key=["day", "region"]` makes
+overlapping windows idempotent -- partial-day rows on slice boundaries are
+updated in place if the scheduler sends an extended window after a missed
+tick.
 
 ### Dependency groups
 
@@ -1180,23 +1184,25 @@ uv run dlt runtime deploy --dry-run
 # deploy the full job graph
 uv run dlt runtime deploy
 
-# kick off the initial backfill -- cascades refresh to all downstream jobs
+# kick off the initial setup + cascade refresh to all downstream jobs.
+# backfill_usgs itself does not load data -- it just fires the signal.
+# downstream jobs then reprocess from `epoch` on their next run.
 uv run dlt runtime trigger "tag:backfill"
 
-# after backfill completes, cron takes over:
-#   usgs_daily fires every 3 minutes
+# after the cascade, cron takes over:
+#   usgs_daily fires every 3 minutes, processing the scheduler-supplied window
 #   transforms fire every 5 minutes (gated on daily freshness)
 
 # monitor
 uv run dlt runtime logs backfill_usgs -f
 uv run dlt runtime logs transform_earthquakes -f
 
-# force a full refresh at any time
+# force another full refresh at any time
 uv run dlt runtime launch backfill_usgs --refresh
 
-# force full refresh of the transformation layer
-# this will run usgs_daily_load that will later propagate refresh flag to transforms which will refresh
-uv run dlt runtime launch usgs_daily_load --refresh
+# force full refresh of the transformation layer only
+# both transform jobs are tagged "transform" -- the selector fires both at once
+uv run dlt runtime trigger "tag:transform" --refresh
 ```
 
 ---
