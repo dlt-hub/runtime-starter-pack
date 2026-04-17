@@ -8,6 +8,7 @@ dependencies = [
     "dlthub",
     "duckdb<1.4.3",
     "fastmcp",
+    "dlt-runtime>=0.25.0a0",
 ]
 
 [tool.uv.sources]

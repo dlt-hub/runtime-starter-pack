@@ -15,8 +15,7 @@ is self-contained -- you can jump to any chapter, but the concepts build on each
 - A [dltHub Runtime](https://dlthub.com) account
 - (Optional) A [MotherDuck](https://motherduck.com) account for cloud destinations
 
-### PoC Prerequisites
-> You must use runtime from this branch: https://github.com/dlt-hub/runtime/pull/578
+### Preview Prerequisites
 > dlt comes from: https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip and is added to each pyproject.toml
 > You must setup runtime client to use locally running backend (already added to config.toml(s))
 ```toml
@@ -24,10 +23,9 @@ is self-contained -- you can jump to any chapter, but the concepts build on each
 log_level="WARNING"  # the system log level of dlt
 # use the dlthub_telemetry setting to enable/disable anonymous usage data reporting, see https://dlthub.com/docs/reference/telemetry
 dlthub_telemetry = false
-api_base_url = "https://dlthub.test/api/api"
-auth_base_url = "https://dlthub.test/api/auth"
+api_base_url = "https://dlthub.dev/api/api"
+auth_base_url = "https://dlthub.dev/api/auth"
 ```
-> you must install runtime client: **uv pip install "git+ssh://git@github.com/dlt-hub/runtime.git@feat/job-deployment-manifest-on-executor#subdirectory=cli"** - not included in `pyproject.toml` because it will not deploy from priv repo
 
 ## Workspace Setup
 

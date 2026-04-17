@@ -9,7 +9,7 @@ dependencies = [
     "dlthub",
     # motherduck does not work with 1.4.3
     "duckdb<1.4.3",
-    "dlt-runtime",
+    "dlt-runtime>=0.25.0a0",
     "numpy>=2.3.5",
     "pyarrow-hotfix>=0.7",
     "openai>=1.0.0",

@@ -272,6 +272,18 @@ wheels = [
 ]
 
 [[package]]
+name = "cron-descriptor"
+version = "2.0.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f2/ce/cd3cc454ea73e8a38be79723b925611d2556037f938372ad594373f187b4/cron_descriptor-2.0.8.tar.gz", hash = "sha256:7e487efe14a99a3c1c23bb5302bb75c8bf5d54bca82931bf71f5ae2855939772", size = 49971, upload-time = "2026-03-23T13:19:17.963Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/78/8c/ae74b17ea1672844a14c176a88f6d2718fa2c10948dc8401824d62265e9e/cron_descriptor-2.0.8-py3-none-any.whl", hash = "sha256:21fae0e6e0e28b19fd6a08e032c700077fe759e9bc1deb1ebe32f277fbc8ba6c", size = 74703, upload-time = "2026-03-23T13:19:16.486Z" },
+]
+
+[[package]]
 name = "croniter"
 version = "6.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -353,7 +365,7 @@ wheels = [
 
 [[package]]
 name = "dlt"
-version = "1.24.1"
+version = "1.25.0"
 source = { url = "https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8" }
 dependencies = [
     { name = "click" },
@@ -383,7 +395,7 @@ dependencies = [
     { name = "tzdata" },
     { name = "win-precise-time", marker = "python_full_version < '3.13' and os_name == 'nt'" },
 ]
-sdist = { hash = "sha256:c07c2078f2672dc40b4722cbd2da670f0d652cbf2677c0ee96a0239694bc16e1" }
+sdist = { hash = "sha256:92fa40b67e743b35fe9e44befbaf504b8af26450372dc174b7a6443a9c934477" }
 
 [package.optional-dependencies]
 motherduck = [
@@ -424,10 +436,11 @@ requires-dist = [
     { name = "db-dtypes", marker = "extra == 'bigquery'", specifier = ">=1.2.0" },
     { name = "db-dtypes", marker = "extra == 'gcp'", specifier = ">=1.2.0" },
     { name = "deltalake", marker = "extra == 'deltalake'", specifier = ">=0.25.1" },
-    { name = "dlt-runtime", marker = "python_full_version >= '3.10' and extra == 'hub'", specifier = ">=0.21.2,<0.25" },
-    { name = "dlthub", marker = "python_full_version >= '3.10' and extra == 'hub'", specifier = ">=0.21.1,<0.25" },
+    { name = "dlt-runtime", marker = "python_full_version >= '3.10' and extra == 'hub'", specifier = ">=0.24.0,<0.26" },
+    { name = "dlthub", marker = "python_full_version >= '3.10' and extra == 'hub'", specifier = ">=0.22.1,<0.26" },
     { name = "duckdb", marker = "extra == 'duckdb'", specifier = ">=0.9" },
     { name = "duckdb", marker = "extra == 'ducklake'", specifier = ">=1.2.0" },
+    { name = "duckdb", marker = "extra == 'lance'", specifier = ">=1.4.3" },
     { name = "duckdb", marker = "extra == 'lancedb'", specifier = ">=1.4.3" },
     { name = "duckdb", marker = "extra == 'motherduck'", specifier = ">=0.9" },
     { name = "duckdb", marker = "extra == 'workspace'", specifier = ">=0.9" },
@@ -445,9 +458,11 @@ requires-dist = [
     { name = "grpcio", marker = "extra == 'gcp'", specifier = ">=1.50.0" },
     { name = "huggingface-hub", marker = "extra == 'hf'", specifier = ">=1.4.1" },
     { name = "humanize", specifier = ">=4.4.0" },
+    { name = "ibis-framework", marker = "python_full_version >= '3.10' and extra == 'lance'", specifier = ">=12.0.0" },
     { name = "ibis-framework", marker = "python_full_version >= '3.10' and extra == 'lancedb'", specifier = ">=12.0.0" },
     { name = "ibis-framework", marker = "python_full_version >= '3.10' and extra == 'workspace'", specifier = ">=12.0.0" },
     { name = "jsonpath-ng", specifier = ">=1.5.3,<1.8" },
+    { name = "lancedb", marker = "extra == 'lance'", specifier = ">=0.22.0" },
     { name = "lancedb", marker = "extra == 'lancedb'", specifier = ">=0.22.0" },
     { name = "marimo", marker = "extra == 'workspace'", specifier = ">=0.14.5" },
     { name = "mowidgets", marker = "python_full_version >= '3.11' and extra == 'workspace'", specifier = ">=0.2.1" },
@@ -475,6 +490,7 @@ requires-dist = [
     { name = "pyarrow", marker = "extra == 'ducklake'", specifier = ">=16.0.0" },
     { name = "pyarrow", marker = "extra == 'fabric'", specifier = ">=16.0.0" },
     { name = "pyarrow", marker = "extra == 'hf'", specifier = ">=21.0.0" },
+    { name = "pyarrow", marker = "extra == 'lance'", specifier = ">=16.0.0" },
     { name = "pyarrow", marker = "extra == 'lancedb'", specifier = ">=16.0.0" },
     { name = "pyarrow", marker = "extra == 'motherduck'", specifier = ">=16.0.0" },
     { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=16.0.0" },
@@ -486,6 +502,7 @@ requires-dist = [
     { name = "pydbml", marker = "extra == 'workspace'", specifier = ">=1.2.0" },
     { name = "pyiceberg", marker = "extra == 'pyiceberg'", specifier = ">=0.9.1" },
     { name = "pyiceberg-core", marker = "extra == 'pyiceberg'", specifier = ">=0.6.0" },
+    { name = "pylance", marker = "extra == 'lance'", specifier = ">=4.0.0" },
     { name = "pyodbc", marker = "extra == 'fabric'", specifier = ">=4.0.39" },
     { name = "pyodbc", marker = "extra == 'mssql'", specifier = ">=4.0.39" },
     { name = "pyodbc", marker = "extra == 'synapse'", specifier = ">=4.0.39" },
@@ -515,7 +532,25 @@ requires-dist = [
     { name = "weaviate-client", marker = "extra == 'weaviate'", specifier = ">=4.0.0,<5.0.0" },
     { name = "win-precise-time", marker = "python_full_version < '3.13' and os_name == 'nt'", specifier = ">=1.4.2" },
 ]
-provides-extras = ["hub", "gcp", "bigquery", "postgres", "redshift", "parquet", "duckdb", "ducklake", "filesystem", "s3", "gs", "az", "hf", "sftp", "http", "snowflake", "motherduck", "cli", "athena", "weaviate", "mssql", "synapse", "fabric", "oracle", "qdrant", "databricks", "clickhouse", "dremio", "lancedb", "deltalake", "sql-database", "sqlalchemy", "pyiceberg", "postgis", "workspace", "dbml"]
+provides-extras = ["hub", "gcp", "bigquery", "postgres", "redshift", "parquet", "duckdb", "ducklake", "filesystem", "s3", "gs", "az", "hf", "sftp", "http", "snowflake", "motherduck", "cli", "athena", "weaviate", "mssql", "synapse", "fabric", "oracle", "qdrant", "databricks", "clickhouse", "dremio", "lancedb", "lance", "deltalake", "sql-database", "sqlalchemy", "pyiceberg", "postgis", "workspace", "dbml"]
+
+[[package]]
+name = "dlt-runtime"
+version = "0.25.0a0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "cron-descriptor" },
+    { name = "croniter" },
+    { name = "httpx" },
+    { name = "pathspec" },
+    { name = "pyjwt" },
+    { name = "tabulate" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/02/6e/577ed6016c5933539bec4295f9aa82c49fba77f2317af6ea6ab6c8a002e2/dlt_runtime-0.25.0a0.tar.gz", hash = "sha256:b515d40c3066915a539834f4b17860e77d44bbc16e91486a54494fa2003cf437", size = 101451, upload-time = "2026-04-17T08:47:35.904Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/39/e4df33b3c888ffb7414a3a0775505597ad6bb020216899638819f76e7c5e/dlt_runtime-0.25.0a0-py3-none-any.whl", hash = "sha256:672c96ed0deac0053d3c09f2e03b8415ba9492879ff0c84c97c776a09d26705e", size = 240024, upload-time = "2026-04-17T08:47:34.564Z" },
+]
 
 [[package]]
 name = "dlthub"
@@ -659,6 +694,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "dlt", extra = ["motherduck", "workspace"] },
+    { name = "dlt-runtime" },
     { name = "dlthub" },
     { name = "duckdb" },
     { name = "marimo" },
@@ -667,6 +703,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dlt", extras = ["motherduck", "workspace"], url = "https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8" },
+    { name = "dlt-runtime", specifier = ">=0.25.0a0" },
     { name = "dlthub" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "marimo", specifier = ">=0.19.0" },
@@ -2126,6 +2163,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/81/69/17425771797c36cded50b7fe44e850315d039f28b15901ab44839e70b593/starlette-1.0.0.tar.gz", hash = "sha256:6a4beaf1f81bb472fd19ea9b918b50dc3a77a6f2e190a12954b25e6ed5eea149", size = 2655289, upload-time = "2026-03-22T18:29:46.779Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/c9/584bc9651441b4ba60cc4d557d8a547b5aff901af35bda3a4ee30c819b82/starlette-1.0.0-py3-none-any.whl", hash = "sha256:d3ec55e0bb321692d275455ddfd3df75fff145d009685eb40dc91fc66b03d38b", size = 72651, upload-time = "2026-03-22T18:29:45.111Z" },
+]
+
+[[package]]
+name = "tabulate"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/58/8c37dea7bbf769b20d58e7ace7e5edfe65b849442b00ffcdd56be88697c6/tabulate-0.10.0.tar.gz", hash = "sha256:e2cfde8f79420f6deeffdeda9aaec3b6bc5abce947655d17ac662b126e48a60d", size = 91754, upload-time = "2026-03-04T18:55:34.402Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/55/db07de81b5c630da5cbf5c7df646580ca26dfaefa593667fc6f2fe016d2e/tabulate-0.10.0-py3-none-any.whl", hash = "sha256:f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3", size = 39814, upload-time = "2026-03-04T18:55:31.284Z" },
 ]
 
 [[package]]

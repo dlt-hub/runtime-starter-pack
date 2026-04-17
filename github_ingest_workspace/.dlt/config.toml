@@ -1,9 +1,9 @@
 [runtime]
 log_level="WARNING"
 dlthub_telemetry = true
-api_base_url = "https://dlthub.test/api/api"
-auth_base_url = "https://dlthub.test/api/auth"
-workspace_id = "3936e510-59c6-46ba-ad15-de7e91f93e39"
+api_base_url = "https://dlthub.dev/api/api"
+auth_base_url = "https://dlthub.dev/api/auth"
+workspace_id = "f8788390-7589-47de-a59c-1699a801d100"
 
 [destination.warehouse]
 destination_type="duckdb"
