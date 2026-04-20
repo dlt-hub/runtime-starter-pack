@@ -3,7 +3,7 @@ log_level="WARNING"
 dlthub_telemetry = true
 api_base_url = "https://dlthub.test/api/api"
 auth_base_url = "https://dlthub.test/api/auth"
-workspace_id = "d1bfae42-2d29-4483-a1f8-1219f74bb13b"
+workspace_id = "bf2b1435-4cb9-42e9-a1c7-26144833d8b5"
 
 [destination.pokeland]
 destination_type="duckdb"

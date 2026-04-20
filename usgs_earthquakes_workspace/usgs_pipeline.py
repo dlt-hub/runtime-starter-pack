@@ -55,8 +55,7 @@ def _load_ingest(interval_start: datetime, interval_end: datetime, resources):
 # ── Ingestion jobs ───────────────────────────────────────────────────
 
 
-@run.pipeline(
-    "usgs_ingest_pipeline",
+@run.job(
     expose={"tags": ["backfill"], "display_name": "USGS backfill cascade"},
     refresh="always",
 )
@@ -76,30 +75,32 @@ def backfill_usgs(epoch = USGS_EPOCH):
 
 @run.pipeline(
     usgs_ing_pipeline,
+    interval={"start": USGS_EPOCH},
     trigger=["*/3 * * * *", backfill_usgs.success],
-    freshness=backfill_usgs.is_fresh,
     require={"timezone": "Europe/Berlin"}
 )
-def usgs_daily(run_context: TJobRunContext, epoch = USGS_EPOCH):
+def usgs_daily(run_context: TJobRunContext, epoch: str = None):
     """Load earthquakes + refresh the significant feed for the scheduler interval.
 
     `run_context["interval_start"]` / `interval_end` are supplied by the
-    Runtime scheduler based on the cron trigger. The scheduler keeps
-    intervals continuous: if prior ticks were missed (freshness gate, app
-    downtime, ...) it extends the window back to the last successful end so
-    no data is dropped.
+    Runtime scheduler based on the cron trigger and the `interval.start`
+    declared in the decorator. The scheduler keeps intervals continuous: if
+    prior ticks were missed (freshness gate, downtime, ...) it extends the
+    window back to where the last successful run ended.
 
-    On refresh (cascade from `backfill_usgs`), we drop the source tables and
-    override `interval_start` with `epoch` so the full history re-ingests.
-
-    Gated on backfill freshness: won't fire until backfill has completed at
-    least once. After that, runs every 3 minutes on its own cron schedule.
+    On refresh (cascade from `backfill_usgs`), Runtime resets the interval to
+    `interval.start` and we drop the source tables. The optional `epoch`
+    parameter is a dev-profile convenience that narrows the refresh window
+    for faster local testing.
     """
     if run_context["refresh"]:
         # wipe source tables; the stateless source has no cursor to clear
         usgs_ing_pipeline.refresh = "drop_sources"
-        # scheduler-supplied start is ignored on refresh -- start from epoch
-        run_context["interval_start"] = datetime.fromisoformat(epoch)
+        # on refresh override interval_start supplied by scheduler, with epoch
+        # we define epoch in the job configuration only for devel profile so we can
+        # easily test on smaller chunk of data.
+        if epoch:
+            run_context["interval_start"] = datetime.fromisoformat(epoch)
     
     print("job context with applied epoch", run_context)
 
@@ -111,23 +112,23 @@ def usgs_daily(run_context: TJobRunContext, epoch = USGS_EPOCH):
 
 @run.pipeline(
     usgs_eq_stats_pipeline,
-    trigger=trigger.every("5m"),
+    trigger=trigger.schedule("*/5 * * * *"),
+    interval={"start": USGS_EPOCH},
     freshness=[usgs_daily.is_fresh],
     require={"dependency_groups": ["ibis"], "timezone": "Europe/Berlin"},
     expose={"tags": ["transform"]},
 )
-def transform_earthquakes(run_context: TJobRunContext, epoch = USGS_EPOCH):
+def transform_earthquakes(run_context: TJobRunContext):
     """Aggregate the earthquake slice into daily/region stats for the scheduler interval.
 
     Consumes `run_context["interval_start"]` / `interval_end` directly -- no
-    cursor state, no upstream-pipeline lookup. On refresh, drops the output
-    table and overrides `interval_start` with `epoch` to re-aggregate the
-    full history.
+    cursor state, no upstream-pipeline lookup. On refresh, Runtime resets the
+    interval to `interval.start` and the job drops the output table to rebuild.
+    No epoch override needed: the data volume is controlled by the ingest job.
     """
 
     if run_context["refresh"]:
         usgs_eq_stats_pipeline.refresh = "drop_resources"
-        run_context["interval_start"] = datetime.fromisoformat(epoch)
     
     print("job context with applied epoch", run_context)
 
