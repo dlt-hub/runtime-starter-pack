@@ -936,24 +936,25 @@ When Runtime fires a scheduled job, it populates `run_context` with the
   job missed previous ticks (downtime, freshness gate blocking, ...), the
   scheduler **extends** `interval_start` back to where the last successful
   run ended. Windows are always continuous -- no gaps, no dropped data.
-- **Refresh run** (`run_context["refresh"] == True`): the job overrides
-  `interval_start` with the configured `epoch` so the full history gets
-  reprocessed.
+- **On refresh**: Runtime resets the interval pointer back to the configured
+  start of the overall range, so the next run reprocesses the full history.
+  The job doesn't have to override `interval_start` manually.
 
-Here's `usgs_daily`:
+Here's how `usgs_daily` uses the scheduler-supplied window:
 
 ```python
 @run.pipeline(
     usgs_ing_pipeline,
+    interval={"start": USGS_EPOCH},
     trigger=["*/3 * * * *", backfill_usgs.success],
-    freshness=backfill_usgs.is_fresh,
     require={"timezone": "Europe/Berlin"},
-    name="usgs_daily_load",
 )
-def usgs_daily(run_context: TJobRunContext, epoch: str = USGS_EPOCH):
+def usgs_daily(run_context: TJobRunContext, epoch: str = None):
     if run_context["refresh"]:
         usgs_ing_pipeline.refresh = "drop_sources"
-        run_context["interval_start"] = datetime.fromisoformat(epoch)
+        # optionally narrow the refresh window for faster dev testing
+        if epoch:
+            run_context["interval_start"] = datetime.fromisoformat(epoch)
 
     _load_ingest(
         run_context["interval_start"],
@@ -966,25 +967,64 @@ No state lookups, no cursor restoration, no SQL filter rendering. The
 scheduler hands over the window; the job forwards it to the stateless
 source.
 
-### Module-level job config
+#### The `interval` decorator argument
 
-`epoch` is a function parameter with `USGS_EPOCH` as its default. dlt injects
-the value from config at call time using the standard `[jobs.<section>.<name>]`
-layout -- but you can also **omit the name** to configure every job in a
-module at once. One section, many jobs:
+The `interval=` parameter tells the scheduler the overall time range the
+job covers:
+
+```python
+interval={"start": USGS_EPOCH}
+```
+
+`interval.start` is where the data begins. Together with the cron trigger
+it defines the full set of discrete windows the job should eventually cover.
+`interval.end` is optional -- when omitted it defaults to "now" on every
+run.
+
+The scheduler uses `interval.start` for two things:
+1. **Initial run**: the first window starts at `interval.start`.
+2. **Refresh**: when a refresh signal arrives, the scheduler resets the
+   interval pointer back to `interval.start` so the entire range gets
+   reprocessed.
+
+Transform jobs in this workspace also declare `interval={"start": USGS_EPOCH}`
+for the same reason -- the scheduler needs to know where transformable data
+begins. Note that transforms don't need to override the window on refresh:
+the amount of data they process is fully controlled by what the ingest job
+loaded.
+
+#### Narrowing the refresh window for dev
+
+The `epoch` function parameter on `usgs_daily` is a dev-profile convenience.
+When set, it overrides the scheduler's reset-to-start on refresh with a
+more recent date, so local test runs finish fast instead of re-ingesting
+from the very beginning:
 
 ```toml
-# .dlt/dev.config.toml
+# .dlt/dev.config.toml -- dev-only, narrows refresh window for fast testing
 [jobs.usgs_pipeline]
 epoch = "2026-04-05T00:00:00+00:00"
 ```
 
-`usgs_pipeline` is the module name. Every decorated function defined in
-`usgs_pipeline.py` -- `backfill_usgs`, `usgs_daily`, `transform_earthquakes`,
-`transform_feeds_summary` -- picks up this `epoch` unless a per-job section
-(`[jobs.usgs_pipeline.usgs_daily]`) overrides it. Different profiles can
-declare different epochs by dropping the same section into
-`prod.config.toml` or `access.config.toml`.
+In production, `epoch` is `None` (no override in `prod.config.toml`), so
+refreshes use the full `interval.start` range as Runtime provides it.
+
+### Module-level job config
+
+The `[jobs.usgs_pipeline]` section in the config above applies to **every**
+job defined in `usgs_pipeline.py` because the default config section for a
+job is the containing module name. A single section, many jobs:
+
+```toml
+[jobs.usgs_pipeline]
+epoch = "2026-04-05T00:00:00+00:00"
+```
+
+Every decorated function in `usgs_pipeline.py` -- `backfill_usgs`,
+`usgs_daily`, `transform_earthquakes`, `transform_feeds_summary` -- picks up
+this `epoch` unless a per-job section (`[jobs.usgs_pipeline.usgs_daily]`)
+overrides it. Only `usgs_daily` actually declares an `epoch` parameter, so
+the value is silently ignored by the others.
 
 See the "Job configuration via `dlt.config.value`" subsection in the
 Reference for the general pattern.
@@ -1014,11 +1054,11 @@ last completed interval has fully covered my scheduled interval."
 ```python
 @run.pipeline(
     usgs_ing_pipeline,
+    interval={"start": USGS_EPOCH},
     trigger=["*/3 * * * *", backfill_usgs.success],
-    freshness=backfill_usgs.is_fresh,
-    name="usgs_daily_load",
+    require={"timezone": "Europe/Berlin"},
 )
-def usgs_daily(run_context: TJobRunContext):
+def usgs_daily(run_context: TJobRunContext, epoch: str = None):
     ...
 ```
 
@@ -1031,9 +1071,9 @@ Freshness is **not** a trigger. The distinction matters:
 
 In this workspace:
 
-- `usgs_daily` declares `freshness=backfill_usgs.is_fresh` -- the cron-driven
-  load is gated on backfill having completed at least once. After backfill is
-  fresh, the cron fires every 3 minutes regardless.
+- `usgs_daily` doesn't use freshness -- it depends on `backfill_usgs` via a
+  followup trigger (`backfill_usgs.success`) and its `interval.start` handles
+  the "first run" boundary.
 - Both transform jobs declare `freshness=[usgs_daily.is_fresh]` -- even though
   they have their own 5-minute cron, they wait until the most recent ingest
   interval is complete. This prevents `transform_feeds_summary` from observing
@@ -1057,14 +1097,13 @@ sole job is to fire the refresh signal and do one-shot setup (drop sources,
 initialize destination state, warm caches, etc.):
 
 ```python
-@run.pipeline(
-    "usgs_ingest_pipeline",
+@run.job(
     expose={"tags": ["backfill"], "display_name": "USGS backfill cascade"},
     refresh="always",
 )
-def backfill_usgs(epoch: str = USGS_EPOCH):
+def backfill_usgs(epoch = USGS_EPOCH):
     """Cascade a refresh signal to every downstream job and do initial setup.
-    Does not load data -- downstream jobs reprocess from `epoch`."""
+    Does not load data -- downstream jobs reprocess from interval.start."""
     print("initial setup for epoch:", epoch)
     # place one-shot setup here (schema init, destination warmup, ...)
 ```
@@ -1076,8 +1115,8 @@ start with `run_context["refresh"] = True` and react accordingly:
 | Job | `refresh=` | Reaction in body |
 |-----|------------|------------------|
 | `backfill_usgs` | `always` | Originates the cascade. One-shot setup only -- loads no data. |
-| `usgs_daily` | `auto` | Sets `pipeline.refresh = "drop_sources"` and overrides `interval_start` with `epoch` so the full history re-ingests. |
-| `transform_earthquakes` | `auto` | Sets `pipeline.refresh = "drop_resources"` and overrides `interval_start` with `epoch` so the full history re-aggregates. |
+| `usgs_daily` | `auto` | Sets `pipeline.refresh = "drop_sources"`. Runtime resets the scheduler interval to `interval.start`; an optional dev-only `epoch` override narrows the window for fast testing. |
+| `transform_earthquakes` | `auto` | Sets `pipeline.refresh = "drop_resources"`. Runtime resets the interval; the transform re-aggregates whatever the ingest loaded. |
 | `transform_feeds_summary` | `auto` | Sets `pipeline.refresh = "drop_resources"`. The replace transform naturally rebuilds from the refreshed ingest data. |
 
 **Why `drop_sources` vs `drop_resources`:**
@@ -1087,8 +1126,9 @@ start with `run_context["refresh"] = True` and react accordingly:
   there's no cursor to clear -- but the table drop ensures the next run
   rebuilds cleanly.
 - `drop_resources` (transforms) drops only the transform's own output
-  table. Upstream ingest tables are untouched, so the transform can read
-  them on the very next run.
+  table(s) and associated resource(s) state. Does not touch other resources. If at some point
+  transformation resources are placed in a single transformation source, this ensures that only
+  resources handled by specified job are dropped in it.
 
 ### Transforms receive the same window
 
@@ -1099,20 +1139,26 @@ and forward it to the Ibis transformation:
 ```python
 @run.pipeline(
     usgs_eq_stats_pipeline,
-    trigger=trigger.every("5m"),
+    trigger=trigger.schedule("*/5 * * * *"),
+    interval={"start": USGS_EPOCH},
     freshness=[usgs_daily.is_fresh],
     require={"dependency_groups": ["ibis"], "timezone": "Europe/Berlin"},
+    expose={"tags": ["transform"]},
 )
-def transform_earthquakes(run_context: TJobRunContext, epoch: str = USGS_EPOCH):
+def transform_earthquakes(run_context: TJobRunContext):
     if run_context["refresh"]:
         usgs_eq_stats_pipeline.refresh = "drop_resources"
-        run_context["interval_start"] = datetime.fromisoformat(epoch)
 
     time_window = (run_context["interval_start"], run_context["interval_end"])
     usgs_eq_stats_pipeline.run(
         earthquake_daily_stats(usgs_ing_pipeline.dataset(), time_window)
     )
 ```
+
+The transform doesn't need an `epoch` override -- the amount of data it
+processes is fully controlled by what the ingest job loaded. Its
+`interval={"start": USGS_EPOCH}` tells the scheduler where transformable
+data begins, but on refresh, Runtime resets the window automatically.
 
 The Ibis transformation applies the window as a filter:
 
@@ -1202,181 +1248,9 @@ uv run dlt runtime launch backfill_usgs --refresh
 # both transform jobs are tagged "transform" -- the selector fires both at once
 uv run dlt runtime trigger "tag:transform" --refresh
 ```
-
 ---
+## Bonus: Workspace Zero
+No profiles, no `uv`, no `pyproject` just raw OSS scripts and notebooks. [Still works](workspace_zero/README.md)
 
-## Reference
-
-The chapters introduce decorator arguments and module conventions only as
-needed. This section documents the full surface so you can browse it on
-demand.
-
-### Decorator arguments
-
-All three decorators -- `@run.job`, `@run.pipeline`, `@run.interactive` --
-share most arguments. Differences are noted per row.
-
-| Argument | Type | Default | Used by | What it does |
-|----------|------|---------|---------|--------------|
-| `name` | `str` | function name | all | Job name within its section. Combined with `section` to form the job_ref. |
-| `section` | `str` | module name | all | Config section. Override when the module name doesn't match the desired config path (e.g. `__deployment__` -- see Chapter 3 MCP example). |
-| `trigger` | `str`, `TTrigger`, or list | none | `@job`, `@pipeline` | When to run. See Chapter 2 (cron, `every`) and Chapter 3 (followup `.success`). |
-| `execute` | `TExecuteSpec` | `{}` | all | `timeout` and `concurrency`. See Chapter 3 timeout section. |
-| `expose` | `TJobExposeSpec` | `{}` | all | UI presentation -- see below. |
-| `require` | `TRequireSpec` | `{}` | all | Runtime resource requirements -- see below. See Chapter 4 dependency_groups example. |
-| `deliver` | source / resource / `SourceFactory` | none | `@job`, `@pipeline` | Associates the job with a `@dlt.source` so Runtime can show what data the job produces. `@run.pipeline` sets this from the pipeline name automatically. |
-| `interval` | `TIntervalSpec` | none | `@job`, `@pipeline` | Overall `{"start": ISO, "end": ISO}` time range for interval-based scheduling and backfills. Used together with a cron trigger to define discrete intervals to process. Detailed coverage deferred to a later document. |
-| `freshness` | constraint string or list | none | `@job`, `@pipeline` | Upstream freshness gates. See Chapter 4. |
-| `refresh` | `"auto"` / `"always"` / `"block"` | `"auto"` | `@job`, `@pipeline` | Refresh-signal cascade policy. See Chapter 4. |
-| `allow_external_schedulers` | `bool` | `False` | `@job`, `@pipeline` | When `True`, dlt incrementals join the runner-provided interval automatically. Use with `interval=` for backfills. |
-| `spec` | `BaseConfiguration` subclass | none | all | Optional config spec class. Function arguments declared with `dlt.config.value` defaults are auto-discovered without `spec`. |
-| `idle_timeout` | `float` or `"24h"` | none | `@interactive` | Recycle the long-running process if idle for this duration. See Chapter 3 MCP section. |
-| `interface` | `"gui"` / `"rest_api"` / `"mcp"` | `"gui"` | `@interactive` | What an interactive job exposes. See Chapter 3 MCP section. |
-
-#### `expose` -- UI presentation
-
-`expose` is a `TJobExposeSpec` dict controlling how the job appears in the
-Runtime dashboard and how it can be triggered:
-
-| Key | Type | Default | What it does |
-|-----|------|---------|--------------|
-| `display_name` | `str` | function name | Human-friendly label. May contain spaces and punctuation. |
-| `tags` | `str` or `list[str]` | `[]` | Group labels. Each tag also produces a `tag:<name>` trigger so `dlt runtime trigger "tag:..."` fires the job (see Chapter 2). |
-| `starred` | `bool` | `False` | Pin to the top of the workspace overview UI. |
-| `manual` | `bool` | `True` | When `True`, Runtime auto-adds a `manual:` trigger so users can fire the job from the dashboard or via `dlt runtime launch`. Set to `False` to disable manual triggering. |
-| `interface` | `"gui"` / `"rest_api"` / `"mcp"` | -- | Set automatically by `@run.interactive(interface=...)`. |
-| `category` | `"pipeline"` / `"mcp"` / `"dashboard"` / `"notebook"` | auto | Set automatically by the framework detector or decorator. `@run.pipeline` sets `pipeline`; marimo modules `notebook`; FastMCP modules `mcp`; Streamlit modules `dashboard`. Rarely set manually. |
-
-#### `require` -- runtime resource requirements
-
-`require` is a `TRequireSpec` dict telling Runtime how to provision the
-execution environment:
-
-| Key | Type | What it does |
-|-----|------|--------------|
-| `dependency_groups` | `list[str]` | PEP 735 dependency groups (from `pyproject.toml`'s `[dependency-groups]`) installed on top of the workspace's `default_groups`. See Chapter 4. |
-| `profile` | `str` | Workspace profile to activate for this job. Overrides the default (`prod` for batch, `access` for interactive). |
-| `provider` | `str` | Infra provider identifier (e.g. `"modal"`). Runtime default when unset. |
-| `machine` | `str` | Machine spec identifier (e.g. `"gpu-a100"`, `"2xlarge"`). |
-| `region` | `str` | Runner region for placement (e.g. `"us-east-1"`). |
-| `timezone` | `str` | IANA timezone for cron ticks and intervals (e.g. `"America/New_York"`). Default: UTC. |
-
-### Trigger types
-
-All triggers normalize to `"type:expr"` strings stored in the manifest. Use
-the constructors from `dlt.hub.run.trigger` for typed parameters and
-validation, or pass the bare string when the shorthand suffices.
-
-| Type | Constructor | Manifest form | Notes |
-|------|-------------|---------------|-------|
-| `schedule` | `trigger.schedule("0 8 * * *")` | `schedule:0 8 * * *` | Cron expression. Bare cron string also auto-detected. |
-| `every` | `trigger.every("5m")` | `every:5m` | Recurring interval. Accepts `"5m"`, `"1h"`, or seconds (float). |
-| `once` | `trigger.once("2026-12-31T23:59:59Z")` | `once:2026-12-31T23:59:59Z` | One-shot at an absolute timestamp. Accepts ISO string, `datetime`, or unix timestamp. |
-| `job.success` | `upstream.success` (property on `JobFactory`) | `job.success:jobs.<section>.<name>` | Fires when the upstream job succeeds. See Chapter 3. |
-| `job.fail` | `upstream.fail` | `job.fail:jobs.<section>.<name>` | Fires when the upstream job fails. |
-| `tag` | `trigger.tag("backfill")` | `tag:backfill` | Broadcast trigger -- fires every job with this tag. Auto-added from `expose.tags`. |
-| `manual` | `trigger.manual()` | `manual:jobs.<...>` | User-initiated via `dlt runtime launch`. Auto-added when `expose.manual=True`. |
-| `pipeline_name` | `trigger.pipeline_name("github_pipeline")` | `pipeline_name:github_pipeline` | Fires on completion of a named pipeline run. Auto-added by `@run.pipeline`. |
-| `http` | `trigger.http(port=8080, path="/api")` | `http:8080/api` | HTTP endpoint for interactive jobs. Auto-added by `@run.interactive`. |
-| `webhook` | `trigger.webhook("/ingest")` | `webhook:/ingest` | Webhook receiver -- Runtime exposes the path and forwards POST bodies to the job. |
-| `deployment` | `trigger.deployment()` | `deployment:` | Fires once per code deploy. Useful for migrations or post-deploy validation. |
-
-### Module-level jobs
-
-Two kinds of modules can be deployed as jobs (no decorator required):
-
-1. **Framework-detected modules** -- the manifest generator probes for a
-   `marimo.App`, `FastMCP`, or `streamlit` usage at module level and produces
-   an interactive job automatically. See Chapter 2 for the notebooks pattern.
-2. **Plain Python modules** -- a local `.py` file with no framework usage is
-   detected as a batch job that runs the module as `__main__`.
-
-Both kinds honor module-level dunders that override the auto-detected job
-definition. Set them at the top of the module file (alongside `import`s):
-
-| Dunder | Equivalent decorator arg | Effect |
-|--------|--------------------------|--------|
-| `__doc__` | -- | Module docstring becomes the job description. First non-empty line for framework jobs. |
-| `__trigger__` | `trigger=` | Extra triggers appended to the detector's defaults (e.g. add `trigger.every("1h")` to a marimo notebook). Accepts a single trigger or a list. |
-| `__expose__` | `expose=` | Replaces the auto-detected `expose` dict. Use to add `tags`, `starred`, `display_name`, etc. |
-| `__requires__` | `require=` | Sets the job's `require` spec (note the **plural** name -- matches the manifest field). |
-
-Example -- add a recurring trigger and tags to a marimo notebook:
-
-```python
-import marimo
-from dlt.hub.run import trigger
-
-__trigger__ = trigger.every("1h")
-__expose__ = {"tags": ["report"], "starred": True}
-
-app = marimo.App()
-# ... marimo cells ...
-```
-
-### Deployment-module dunders
-
-The `__deployment__.py` module itself supports a small set of dunders that
-configure the workspace as a whole:
-
-| Dunder | Type | What it does |
-|--------|------|--------------|
-| `__doc__` | `str` | Workspace description shown in the Runtime dashboard. Only the first non-empty line is used. |
-| `__tags__` | `list[str]` | Workspace-level tags applied to the deployment as metadata. |
-| `__all__` | `list[str]` | Explicit list of exports to deploy. Strongly recommended -- without it the manifest generator scans the entire `__dict__` and warns. |
-
-### Auto-set fields
-
-A few things appear in the manifest without you setting them. Useful to know
-when you see them in `dlt runtime deploy --show-manifest` output:
-
-- **`expose.manual = True`** by default -- adds a `manual:<job_ref>` trigger
-  so the job can be launched from the CLI or dashboard. Set
-  `expose={"manual": False}` to disable.
-- **`expose.category`** -- auto-set by detectors (`notebook`, `mcp`,
-  `dashboard`) and by `@run.pipeline` (`pipeline`).
-- **`expose.tags`** -- each tag adds a `tag:<name>` trigger so
-  `dlt runtime trigger "tag:..."` works.
-- **`pipeline_name:`** trigger -- added automatically by `@run.pipeline` so
-  `dlt runtime run-pipeline <name>` matches the job.
-- **`http:`** trigger -- added automatically by `@run.interactive`.
-- **`default_trigger`** -- the manifest generator picks one trigger as the
-  primary (preferring `schedule` / `every`; never `manual` or `deployment`).
-- **Workspace dashboard** -- a synthesized `jobs.workspace.dashboard`
-  interactive job is auto-included for every `__deployment__` module so the
-  workspace is browsable in the Runtime UI without extra setup.
-
-### Job configuration via `dlt.config.value`
-
-Job functions can declare configuration parameters using dlt's standard
-config injection -- the same mechanism `dlt.source` / `dlt.resource` use.
-Default values come from `.dlt/<profile>.config.toml` under the
-`[jobs.<section>.<name>]` section.
-
-Example -- a backfill job whose start epoch is configurable per profile (used
-by Chapter 4's `backfill_usgs`):
-
-```python
-import dlt
-from dlt.common import pendulum
-from dlt.hub import run
-
-@run.pipeline("usgs_ingest_pipeline", refresh="always")
-def backfill_usgs(epoch: pendulum.DateTime = USGS_EPOCH):
-    print("starting from epoch:", epoch)
-    ...
-```
-
-```toml
-# .dlt/dev.config.toml
-[jobs.backfill_usgs]
-epoch = "2026-04-05T00:00:00+00:00"
-```
-
-The job picks up the dev epoch when run with the `dev` profile. Production
-falls back to the `USGS_EPOCH` default (or a different value in
-`prod.config.toml`). The same pattern works for any job decorator -- the
-config section is `[jobs.<section>.<name>]`, where `<section>` and `<name>`
-default to the module name and function name (overridable via the `section=`
-and `name=` decorator args).
-
+For the full reference on decorator arguments, triggers, module conventions,
+and manifest auto-generation, see [REFERENCE.md](REFERENCE.md).
