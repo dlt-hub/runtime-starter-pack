@@ -1,0 +1,6 @@
+[runtime]
+log_level="WARNING"
+dlthub_telemetry = true
+
+[destination.fruitshop_destination]
+destination_type="duckdb"

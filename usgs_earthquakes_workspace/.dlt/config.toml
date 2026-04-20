@@ -1,0 +1,6 @@
+[runtime]
+log_level="WARNING"
+dlthub_telemetry = true
+
+[destination.pokeland]
+destination_type="duckdb"

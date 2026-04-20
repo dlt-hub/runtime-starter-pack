@@ -208,7 +208,7 @@ __marimo__/
 
 secrets.toml
 *.secrets.toml
-.dlt/.var
+.var
 _local
 .git
 

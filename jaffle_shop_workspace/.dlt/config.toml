@@ -1,0 +1,9 @@
+[runtime]
+log_level="WARNING"
+dlthub_telemetry = true
+
+[destination.jaffleshop_transformation_destination]
+destination_type="duckdb"
+
+[jobs.jaffle_mcp.mcp]
+transport = "http"

@@ -1,0 +1,6 @@
+[destination.pokeland]
+destination_type = "duckdb"
+
+# setting for all jobs in usgs_pipeline module
+[jobs.usgs_pipeline]
+epoch="2026-04-05T00:00:00+00:00"
