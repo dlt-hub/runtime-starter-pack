@@ -536,7 +536,7 @@ provides-extras = ["hub", "gcp", "bigquery", "postgres", "redshift", "parquet", 
 
 [[package]]
 name = "dlt-runtime"
-version = "0.25.0a0"
+version = "0.25.0a1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -547,9 +547,9 @@ dependencies = [
     { name = "pyjwt" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/02/6e/577ed6016c5933539bec4295f9aa82c49fba77f2317af6ea6ab6c8a002e2/dlt_runtime-0.25.0a0.tar.gz", hash = "sha256:b515d40c3066915a539834f4b17860e77d44bbc16e91486a54494fa2003cf437", size = 101451, upload-time = "2026-04-17T08:47:35.904Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/0b/952286cbfaa51f153dda01f130c929744bdaba1848738d9d286464e1235e/dlt_runtime-0.25.0a1.tar.gz", hash = "sha256:99071f4f8945597ce3bd4eea144c52e7bba4114dfb5cd5377f7932bf9b011f2a", size = 101620, upload-time = "2026-04-20T12:12:55.502Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/39/e4df33b3c888ffb7414a3a0775505597ad6bb020216899638819f76e7c5e/dlt_runtime-0.25.0a0-py3-none-any.whl", hash = "sha256:672c96ed0deac0053d3c09f2e03b8415ba9492879ff0c84c97c776a09d26705e", size = 240024, upload-time = "2026-04-17T08:47:34.564Z" },
+    { url = "https://files.pythonhosted.org/packages/69/9e/572590daf72de10a3db681d14e33a317b7de6ce3b81edd9dabc8c4f4dbe5/dlt_runtime-0.25.0a1-py3-none-any.whl", hash = "sha256:ae6b8c3c50f097e08b65502675edaf5d8daf2b46a20f03abfa9e72685d8913f7", size = 240295, upload-time = "2026-04-20T12:12:53.187Z" },
 ]
 
 [[package]]
@@ -848,7 +848,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dlt", extras = ["motherduck", "workspace"], url = "https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8" },
-    { name = "dlt-runtime", specifier = ">=0.25.0a0" },
+    { name = "dlt-runtime", specifier = ">=0.25.0a1" },
     { name = "dlthub" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "fastmcp" },

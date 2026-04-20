@@ -1,9 +1,6 @@
 [runtime]
 log_level="WARNING"
 dlthub_telemetry = true
-api_base_url = "https://dlthub.dev/api/api"
-auth_base_url = "https://dlthub.dev/api/auth"
-workspace_id = "2e259cb7-1403-42db-875f-b55891901935"
 
 [destination.fruitshop_destination]
 destination_type="duckdb"
