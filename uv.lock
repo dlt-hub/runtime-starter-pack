@@ -495,19 +495,20 @@ provides-extras = ["hub", "gcp", "bigquery", "postgres", "redshift", "parquet", 
 
 [[package]]
 name = "dlt-runtime"
-version = "0.24.0"
+version = "0.25.0a0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "cron-descriptor" },
+    { name = "croniter" },
     { name = "httpx" },
     { name = "pathspec" },
     { name = "pyjwt" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/07/0ec72fd171dd0fabcbd9a2cec0fd2a7d44aad8c4cdd803532380f91ba785/dlt_runtime-0.24.0.tar.gz", hash = "sha256:ac7404bc59c395e76a5edac1cdef49e41dfa0227553c274ddb1bc9ed8a2737cb", size = 76203, upload-time = "2026-04-07T09:31:01.627Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/6e/577ed6016c5933539bec4295f9aa82c49fba77f2317af6ea6ab6c8a002e2/dlt_runtime-0.25.0a0.tar.gz", hash = "sha256:b515d40c3066915a539834f4b17860e77d44bbc16e91486a54494fa2003cf437", size = 101451, upload-time = "2026-04-17T08:47:35.904Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/26/feda4f16cbfb1fa14cd6938415d445aaecee953918f757bbf3add2954935/dlt_runtime-0.24.0-py3-none-any.whl", hash = "sha256:d57f4f9181dd88b998c3e122d4027bff75a1fce773c9ddc2cd04e90de99c913b", size = 197036, upload-time = "2026-04-07T09:31:00.4Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/39/e4df33b3c888ffb7414a3a0775505597ad6bb020216899638819f76e7c5e/dlt_runtime-0.25.0a0-py3-none-any.whl", hash = "sha256:672c96ed0deac0053d3c09f2e03b8415ba9492879ff0c84c97c776a09d26705e", size = 240024, upload-time = "2026-04-17T08:47:34.564Z" },
 ]
 
 [[package]]
@@ -2016,7 +2017,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dlt", extras = ["motherduck", "workspace"], url = "https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip" },
-    { name = "dlt-runtime" },
+    { name = "dlt-runtime", specifier = ">=0.25.0a0" },
     { name = "dlthub" },
     { name = "duckdb", specifier = "<1.4.3" },
     { name = "marimo", specifier = ">=0.19.0" },
