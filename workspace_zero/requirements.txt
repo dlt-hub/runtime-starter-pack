@@ -1,0 +1,1 @@
+dlt[motherduck] @ https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8
