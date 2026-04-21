@@ -7,7 +7,6 @@ dependencies = [
     "dlt[motherduck,workspace,hub]==1.26.0a1",
     "duckdb<1.4.3",
     "fastmcp",
-    "dlt-runtime>=0.25.0a1",
 ]
 
 [tool.uv.sources]
