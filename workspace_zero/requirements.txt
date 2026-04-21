@@ -1,1 +1,1 @@
-dlt[motherduck] @ https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8
+dlt[motherduck,hub]==1.26.0a1

@@ -1,9 +1,6 @@
 [runtime]
 log_level="INFO"
 dlthub_telemetry = true
-api_base_url = "https://dlthub.test/api/api"
-auth_base_url = "https://dlthub.test/api/auth"
-workspace_id = "3d50f4c7-9ef0-47cf-b245-3e145b9349e3"
 
 [destination.fruitshop_destination]
 destination_type="motherduck"

@@ -77,6 +77,7 @@ def backfill_usgs(epoch = USGS_EPOCH):
     usgs_ing_pipeline,
     interval={"start": USGS_EPOCH},
     trigger=["*/3 * * * *", backfill_usgs.success],
+    freshness=backfill_usgs.is_fresh,
     require={"timezone": "Europe/Berlin"}
 )
 def usgs_daily(run_context: TJobRunContext, epoch: str = None):

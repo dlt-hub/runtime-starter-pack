@@ -4,14 +4,10 @@ version = "0.1.0"
 description = "Simple dlt workspace with a single pipeline and notebook"
 requires-python = ">=3.12"
 dependencies = [
-    "dlt[motherduck,workspace]",
-    "dlthub",
+    "dlt[motherduck,workspace,hub]==1.26.0a1",
     "duckdb<1.4.3",
     "marimo>=0.19.0",
     "dlt-runtime>=0.25.0a1",
 ]
 
 [tool.uv.sources]
-# dlt = { path = "../../dlt", editable = true }
-dlt = { url="https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip?v=8"}
-# dlt-runtime = { path = "../../runtime/cli", editable = true }
