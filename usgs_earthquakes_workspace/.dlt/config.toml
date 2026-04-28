@@ -1,7 +1,6 @@
 [runtime]
 log_level="WARNING"
 dlthub_telemetry = true
-workspace_id = "24514d12-758d-44b9-ac07-6e09899a33c7"
 
 [destination.pokeland]
 destination_type="duckdb"

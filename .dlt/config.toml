@@ -4,8 +4,6 @@
 log_level="WARNING"  # the system log level of dlt
 # use the dlthub_telemetry setting to enable/disable anonymous usage data reporting, see https://dlthub.com/docs/reference/telemetry
 dlthub_telemetry = true
-# workspace_id = "9710e013-032c-4da9-825f-f2b0da1c4b49"
-workspace_id = "a82a6ab1-1831-4944-a3d4-379d74d480af"
 
 [destination.fruitshop_destination]
 destination_type="duckdb"

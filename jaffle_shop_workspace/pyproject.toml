@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Jaffle Shop workspace with connected ingest and transform pipelines"
 requires-python = ">=3.12"
 dependencies = [
-    "dlt[motherduck,workspace,hub]==1.26.0a1",
+    "dlt[motherduck,workspace,hub]>=1.26.0",
     "duckdb<1.4.3",
     "fastmcp",
 ]
