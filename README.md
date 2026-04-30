@@ -15,6 +15,22 @@ is self-contained -- you can jump to any chapter, but the concepts build on each
 - A [dltHub Runtime](https://dlthub.com) account
 - (Optional) A [MotherDuck](https://motherduck.com) account for cloud destinations
 
+> **Using an AI coding assistant?** Pair this tutorial with the
+> [dltHub AI Workbench](https://github.com/dlt-hub/dlthub-ai-workbench) —
+> a set of toolkits (skills, slash commands, MCP server) that give Claude Code,
+> Cursor, and Codex guided workflows for building pipelines, exploring data,
+> writing transformations, and deploying to Runtime. Quick start:
+>
+> ```sh
+> uv add "dlt[workspace,hub]"
+> uv run dlt ai init
+> uv run dlt ai toolkit dlthub-runtime install
+> uv run dlt ai toolkit data-exploration install
+> uv run dlt ai toolkit transformations install
+> ```
+>
+> See the [Agentic data engineering workflow docs](https://dlthub.com/docs/dlt-ecosystem/llm-tooling/llm-native-workflow) for the full list of toolkits.
+
 ### Preview Prerequisites
 > dlt comes from: https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip and is added to each pyproject.toml
 > You must setup runtime client to use locally running backend (already added to config.toml(s))
