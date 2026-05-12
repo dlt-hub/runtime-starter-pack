@@ -13,3 +13,9 @@ dependencies = [
 ibis = ["ibis-framework[duckdb]"]
 
 [tool.uv.sources]
+
+[tool.uv]
+# Add constraints for transitory dependencies, usually a result of a dependabot alert
+constraint-dependencies = [
+    "dlt-runtime>=0.26.2a1"
+]
