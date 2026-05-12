@@ -1,3 +1,19 @@
+# dlt-specific ignores
+# secrets and credentials
+secrets.toml
+*.secrets.toml
+# ignore pinned profile name
+.dlt/profile-name
+# ignore default state dir (pipeline state, working files)
+.dlt/state
+# ignore default data dir (local destination data)
+.dlt/data
+# legacy local data dir
+.dlt/.var
+# ignore duckdb
+*.duckdb
+*.wal
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -206,11 +222,7 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-secrets.toml
-*.secrets.toml
-.var
 _local
-.git
 
 # LanceDB data directories
 *.lancedb/

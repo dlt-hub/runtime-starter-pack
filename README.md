@@ -1,4 +1,4 @@
-# dltHub Runtime Tutorial
+# dltHub Tutorial
 
 This tutorial walks through four workspaces of increasing complexity. Each workspace
 is self-contained -- you can jump to any chapter, but the concepts build on each other:
@@ -12,19 +12,18 @@ is self-contained -- you can jump to any chapter, but the concepts build on each
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) package manager
-- A [dltHub Runtime](https://dlthub.com) account
+- A [dltHub](https://dlthub.com) account
 - (Optional) A [MotherDuck](https://motherduck.com) account for cloud destinations
 
 ### Preview Prerequisites
 > dlt comes from: https://github.com/dlt-hub/dlt/archive/refs/heads/feat/workspace-deployment.zip and is added to each pyproject.toml
-> You must setup runtime client to use locally running backend (already added to config.toml(s))
+> The `dlt[hub]` extra (declared in each workspace's `pyproject.toml`) pulls in `dlthub` and `dlthub-client`.
+> Override `api_base_url` only when targeting a self-hosted control plane; the default is `https://api.dlthub.com`.
 ```toml
 [runtime]
 log_level="WARNING"  # the system log level of dlt
 # use the dlthub_telemetry setting to enable/disable anonymous usage data reporting, see https://dlthub.com/docs/reference/telemetry
 dlthub_telemetry = false
-api_base_url = "https://dlthub.dev/api/api"
-auth_base_url = "https://dlthub.dev/api/auth"
 ```
 
 ## Workspace Setup
@@ -42,13 +41,18 @@ source .venv/bin/activate
 Every workspace uses **named destinations** (e.g. `fruitshop_destination`, `warehouse`)
 that resolve to different backends depending on the active **profile**:
 
-| Profile   | Config file           | Secrets file           | Destination | Use case |
-|-----------|----------------------|----------------------|-------------|----------|
-| `dev`     | `dev.config.toml`    | `secrets.toml`       | DuckDB (local) | Local development |
-| `prod`    | `prod.config.toml`   | `prod.secrets.toml`  | MotherDuck   | Batch jobs on Runtime |
-| `access`  | `access.config.toml` | `access.secrets.toml`| MotherDuck (read-only) | Interactive notebooks on Runtime |
+| Profile   | Scope            | Config file           | Secrets file           | Destination            | Use case |
+|-----------|------------------|----------------------|----------------------|------------------------|----------|
+| `dev`     | Local only       | `dev.config.toml`    | `secrets.toml`       | DuckDB (local)         | Local development |
+| `tests`   | Local only       | `tests.config.toml`  | `tests.secrets.toml` | Test credentials       | Automated tests |
+| `prod`    | Synced to dltHub | `prod.config.toml`   | `prod.secrets.toml`  | MotherDuck             | Batch jobs on dltHub |
+| `access`  | Synced to dltHub | `access.config.toml` | `access.secrets.toml`| MotherDuck (read-only) | Interactive notebooks on dltHub |
 
-The `dev` profile is active by default. When you run a batch job on Runtime, it uses
+`dev` and `tests` configs stay on your machine -- they are never uploaded. `prod`,
+`access`, and any custom profile referenced in a job decorator are synchronized
+with the dltHub backend whenever you deploy.
+
+The `dev` profile is active by default. When you run a batch job on dltHub, it uses
 `prod`. When you serve an interactive notebook, it uses `access`.
 
 To configure MotherDuck credentials, create the secrets files in each workspace's
@@ -69,18 +73,69 @@ password = "your-motherduck-read-only-token"
 ```
 
 > Secrets files (`*.secrets.toml`, `secrets.toml`) are gitignored. Never commit them.
-> Runtime stores your secrets securely when you sync your configuration.
+> dltHub stores your secrets securely when you sync your configuration.
 
-### Connecting to Runtime
+### Connecting to dltHub
 
-Authenticate once from any workspace:
+Authentication is split into two steps:
 
 ```sh
-uv run dlt runtime login
+# 1. log in (OAuth device flow, identity only)
+uv run dlthub login
+
+# 2. bind the current workspace directory to a remote workspace
+uv run dlthub workspace connect
 ```
 
-This opens a browser for GitHub OAuth and links your local workspace to your
-dltHub Runtime account.
+`dlthub workspace connect` writes `workspace_id` (and on the first connect,
+`organization_id`) into the local `.dlt/config.toml`. Pass `<name_or_id>` to bind
+to a specific workspace, or omit it for an interactive picker grouped by
+organization.
+
+> The first time you run `dlthub deploy`, `dlthub run`, or `dlthub serve` in a
+> workspace, the CLI auto-prompts both `login` and `workspace connect` if they
+> haven't been done yet. Each workspace directory in this tutorial maintains its
+> own binding -- run `dlthub workspace connect` inside each one separately.
+
+## Command line fundamentals
+
+The `dlthub` CLI is split into two scopes:
+
+- **local** -- `dlthub local ...` operates on the **local workspace** (files in
+  `.dlt/`, your machine's pipeline working dirs, local profiles).
+- **remote** -- `dlthub ...` (unqualified) operates on the **connected dltHub
+  workspace** (the cloud deployment, configurations, jobs, runs).
+
+Most actions and entities exist in both scopes: running a job, serving an
+interactive app, inspecting workspace state, listing pipelines. Verbs have
+consistent meaning regardless of scope or entity:
+
+| Verb | Meaning |
+|------|---------|
+| `info` | Print structured information about the entity (workspace, job, run, deployment) |
+| `list` | Enumerate entities |
+| `run` | Execute a batch job or pipeline |
+| `serve` | Start an interactive job (notebook, dashboard, MCP server, REST app) |
+| `show` | Open the GUI / human-readable interface (web dashboard remotely, marimo view locally) |
+| `clean` | Remove local artefacts (wipe pipeline working dirs and locally loaded data) |
+| `sync` | Push local changes to the cloud counterpart |
+| `cancel` | Cancel an in-flight job or run |
+| `connect` | Bind a local entity to a remote one |
+| `deploy` | Push the deployment manifest to the cloud |
+
+The local and remote scopes mirror each other:
+
+| Local | Remote |
+|-------|--------|
+| `dlthub local run [<selector_or_job>]` | `dlthub run [<selector_or_job>]` |
+| `dlthub local serve [<selector_or_job>]` | `dlthub serve [<selector_or_job>]` |
+| `dlthub local pipeline run <pipeline_name>` | `dlthub pipeline run <pipeline_name>` |
+| `dlthub local info` | `dlthub workspace info` |
+| `dlthub local show` | `dlthub show` |
+
+Run the local form first to catch missing dependencies, misconfigured
+destinations, or broken decorators without burning a remote slot. Every chapter
+below pairs the local example with the cloud command for this reason.
 
 ---
 
@@ -92,7 +147,7 @@ This is the simplest possible dlt workspace. It contains a pipeline that loads
 locally-generated data and a marimo notebook for exploring it. There are no
 job decorators and no deployment module -- everything is a regular Python script.
 
-This is how you'd deploy an existing dlt project to Runtime without changing any code.
+This is how you'd deploy an existing dlt project to dltHub without changing any code.
 
 ### What's inside
 
@@ -136,16 +191,28 @@ uv run python fruitshop_pipeline.py
 
 This runs with the `dev` profile -- data goes into a local DuckDB file.
 
-### Deploy and run on Runtime
+You can also use the workspace-aware local runner, which loads the same script
+through the deployment system (so `--profile`, `--dry-run`, `-c KEY=VALUE` and
+friends all work):
+
+```sh
+uv run dlthub local run fruitshop_pipeline.py
+```
+
+### Deploy and run on dltHub
 
 Upload your code and run the pipeline as a batch job:
 
 ```sh
-uv run dlt runtime launch fruitshop_pipeline.py
+# test locally first
+uv run dlthub local run fruitshop_pipeline.py
+
+# deploy and run in the cloud
+uv run dlthub run fruitshop_pipeline.py
 ```
 
-This single command:
-1. Syncs your code and configuration to Runtime
+`dlthub run` single command:
+1. Syncs your code and configuration to dltHub
 2. Creates a batch job from the script and starts it
 
 The batch job runs with the `prod` profile, so data goes to MotherDuck (or
@@ -154,12 +221,12 @@ whichever cloud destination you configured in `prod.config.toml`).
 Add `-f` to follow logs in your terminal until the run completes:
 
 ```sh
-uv run dlt runtime launch fruitshop_pipeline.py -f
+uv run dlthub run fruitshop_pipeline.py -f
 ```
 
-> **How it works**: `launch` and `serve` accept a Python file name as a
+> **How it works**: `run` and `serve` accept a Python file name as a
 > convenience. Under the hood, the CLI generates a single-job deployment manifest
-> from that file and syncs it to Runtime. This is called an **ad-hoc deploy** --
+> from that file and syncs it to dltHub. This is called an **ad-hoc deploy** --
 > no `__deployment__` module is needed. When a workspace grows beyond one or two
 > scripts, you'll want a proper deployment module instead (see Chapter 2).
 
@@ -168,7 +235,11 @@ uv run dlt runtime launch fruitshop_pipeline.py -f
 Deploy the marimo notebook as an interactive app:
 
 ```sh
-uv run dlt runtime serve fruitshop_notebook.py
+# test locally first
+uv run dlthub local serve fruitshop_notebook.py
+
+# deploy and serve in the cloud
+uv run dlthub serve fruitshop_notebook.py
 ```
 
 This deploys the notebook with the `access` profile (read-only credentials),
@@ -177,20 +248,20 @@ waits until it's running, and opens it in your browser.
 ### Monitor
 
 ```sh
-# open the Runtime web dashboard
-uv run dlt runtime dashboard
+# open the dltHub web dashboard
+uv run dlthub show
 
 # workspace deployment overview
-uv run dlt runtime info
+uv run dlthub workspace info
 
 # list all jobs
-uv run dlt runtime job list
+uv run dlthub job list
 
 # stream logs for the latest run
-uv run dlt runtime logs fruitshop_pipeline -f
+uv run dlthub job logs fruitshop_pipeline -f
 
 # cancel a stuck run
-uv run dlt runtime cancel fruitshop_pipeline
+uv run dlthub job cancel fruitshop_pipeline
 ```
 
 ### How profiles work
@@ -198,19 +269,20 @@ uv run dlt runtime cancel fruitshop_pipeline
 When you run a script locally, dlt uses the base `config.toml` merged with
 `dev.config.toml` -- the dev profile is the default.
 
-When Runtime runs a **batch job** (via `launch`), it uses the `prod`
+When dltHub runs a **batch job** (via `dlthub run`), it uses the `prod`
 profile: `config.toml` + `prod.config.toml` + `prod.secrets.toml`.
 
-When Runtime runs an **interactive job** (via `serve`), it uses the `access` profile:
-`config.toml` + `access.config.toml` + `access.secrets.toml`.
+When dltHub runs an **interactive job** (via `dlthub serve`), it uses the
+`access` profile: `config.toml` + `access.config.toml` + `access.secrets.toml`.
 
 This separation ensures batch pipelines have write access while notebooks only
 get read-only credentials.
 
 ### Limitations of ad-hoc deployment
 
-Using `launch` and `serve` with a script file is the quickest way to get code
-running on Runtime. However, it creates jobs one at a time and doesn't support:
+Using `dlthub run` and `dlthub serve` with a script file is the quickest way to
+get code running on dltHub. However, it creates jobs one at a time and doesn't
+support:
 
 - Scheduled triggers (cron, every N minutes)
 - Followup jobs (run B after A succeeds)
@@ -231,7 +303,7 @@ introduces the three building blocks of manifest-based deployment:
 
 - **Job decorators** that attach scheduling and metadata to Python functions
 - **`__deployment__.py`** that declares which jobs exist in the workspace
-- **`dlt runtime deploy`** that syncs the entire job graph to Runtime in one step
+- **`dlthub deploy`** that syncs the entire job graph to dltHub in one step
 
 ### What's inside
 
@@ -260,7 +332,7 @@ github_ingest_workspace/
 - **`github_dq_pipeline.py`** (`run_dq_checks`) -- validates the ingested data
   by running a suite of checks (non-null keys, valid contributor types, positive
   contribution counts). The job **fails** if any check has failures, making it
-  visible in the Runtime dashboard. Runs hourly via a cron schedule.
+  visible in the dltHub dashboard. Runs hourly via a cron schedule.
 
 ### The notebooks
 
@@ -289,9 +361,9 @@ the report notebook reads.
 
 ### Job decorators
 
-Instead of using `launch` with a file name, you can decorate functions with
+Instead of using `dlthub run` with a file name, you can decorate functions with
 `@job` or `@pipeline` from `dlt.hub.run`. The decorator attaches metadata --
-triggers, tags, display name -- that Runtime uses to schedule and present the job.
+triggers, tags, display name -- that dltHub uses to schedule and present the job.
 
 dlt.hub.run provides two decorators for batch jobs:
 
@@ -299,7 +371,7 @@ dlt.hub.run provides two decorators for batch jobs:
 - **`@pipeline`** -- a batch job bound to a named `dlt.pipeline`
 
 Both produce the same kind of job. `@pipeline` is a convenience that associates
-the job with a specific pipeline name, so Runtime can link telemetry and datasets.
+the job with a specific pipeline name, so dltHub can link telemetry and datasets.
 
 Note: we'll have fine grained retries and other goodies on `@pipeline` soon
 
@@ -325,6 +397,19 @@ def load_commits():
     print(load_info)
 ```
 
+> **Pipeline jobs can be triggered by pipeline name.** Because `load_commits`
+> is decorated with `@run.pipeline("github_pipeline", ...)`, the first argument
+> becomes a pipeline name selector that both the local and remote CLI honor:
+>
+> ```sh
+> uv run dlthub local pipeline run github_pipeline   # locally
+> uv run dlthub pipeline run github_pipeline         # in the cloud
+> ```
+>
+> This works only for jobs decorated with `@run.pipeline` -- jobs declared with
+> `@run.job` or `@run.interactive` aren't addressable this way (use
+> `dlthub run <job_name>` or `dlthub job trigger <selector>` for those).
+
 And the data quality batch job in `github_dq_pipeline.py`:
 
 ```python
@@ -344,7 +429,7 @@ def run_dq_checks():
 
 ### Triggers
 
-A trigger tells Runtime **when** to run a job. You can pass a trigger (or a list
+A trigger tells dltHub **when** to run a job. You can pass a trigger (or a list
 of triggers) to any job decorator.
 
 | Trigger | Meaning |
@@ -362,7 +447,7 @@ CLI command to add or remove schedules -- change the decorator, redeploy.
 Tags are labels attached to jobs via the `expose` parameter. They serve two
 purposes:
 
-1. **Organization** -- group related jobs in the Runtime dashboard
+1. **Organization** -- group related jobs in the dltHub dashboard
 2. **Bulk operations** -- trigger, list, or cancel all jobs sharing a tag
 
 For example, the ingestion job above has `tags: ["ingest"]`. In a larger
@@ -371,17 +456,17 @@ them all at once:
 
 ```sh
 # trigger every job tagged "ingest"
-uv run dlt runtime trigger "tag:ingest"
+uv run dlthub job trigger "tag:ingest"
 ```
 
 This is useful for backfill scenarios: tag all your ingestion jobs with
-`"backfill"`, then `dlt runtime trigger "tag:backfill"` fires them all in one
+`"backfill"`, then `dlthub job trigger "tag:backfill"` fires them all in one
 command.
 
 ### The deployment module
 
 `__deployment__.py` is a Python module that declares everything deployable in
-the workspace. Runtime discovers jobs by inspecting its contents:
+the workspace. dltHub discovers jobs by inspecting its contents:
 
 ```python
 """GitHub ingest workspace -- loads and monitors GitHub API data"""
@@ -413,28 +498,28 @@ The rules are straightforward:
 - **`__all__`** lists exactly which names to deploy. Only listed names are
   included.
 - **`__doc__`** (the module docstring) becomes the workspace description visible
-  in the Runtime dashboard.
+  in the dltHub dashboard.
 
-### Deploying with `dlt runtime deploy`
+### Deploying with `dlthub deploy`
 
 This is the central command for manifest-based deployment. It reads your
-`__deployment__.py`, generates a deployment manifest, and syncs it to Runtime:
+`__deployment__.py`, generates a deployment manifest, and syncs it to dltHub:
 
 ```sh
 cd github_ingest_workspace
-uv run dlt runtime deploy
+uv run dlthub deploy
 ```
 
 The deploy command:
 1. Imports `__deployment__.py` and collects all job definitions
 2. Generates a deployment manifest (a JSON document describing every job,
    its triggers, entry points, and metadata)
-3. Syncs your code and configuration to Runtime
-4. Sends the manifest to Runtime for **reconciliation**
+3. Syncs your code and configuration to dltHub
+4. Sends the manifest to dltHub for **reconciliation**
 
 #### Reconciliation
 
-Runtime compares the new manifest against the currently deployed jobs and
+dltHub compares the new manifest against the currently deployed jobs and
 classifies each one:
 
 | Status | Meaning |
@@ -444,7 +529,7 @@ classifies each one:
 | **unchanged** | No changes -- left as-is |
 | **archived** | Job was in the previous manifest but not in this one -- triggers disabled, history preserved |
 
-This is declarative: you describe what should exist, Runtime figures out the diff.
+This is declarative: you describe what should exist, dltHub figures out the diff.
 Removing a job from `__deployment__.py` doesn't delete it -- it archives it, preserving
 run history and logs.
 
@@ -452,38 +537,42 @@ run history and logs.
 
 ```sh
 # see what would change without applying
-uv run dlt runtime deploy --dry-run
+uv run dlthub deploy --dry-run
 
 # dump the full expanded manifest as YAML
-uv run dlt runtime deploy --show-manifest
+uv run dlthub deploy --show-manifest
 ```
 
 ### Running jobs
 
 After deploying, jobs with triggers run automatically on their schedule. You can
-also run them manually:
+also run them manually -- and dry-run them locally first:
 
 ```sh
-# launch a specific job by name
-uv run dlt runtime launch load_commits
+# test locally before triggering the cloud version
+uv run dlthub local run load_commits
 
-# launch with log streaming
-uv run dlt runtime launch load_commits -f
+# run a specific job by name remotely
+uv run dlthub run load_commits
+
+# run with log streaming
+uv run dlthub run load_commits -f
 
 # trigger all jobs tagged "ingest"
-uv run dlt runtime trigger "tag:ingest"
+uv run dlthub job trigger "tag:ingest"
 
 # trigger all jobs that have a schedule trigger
-uv run dlt runtime trigger "schedule:*"
+uv run dlthub job trigger "schedule:*"
 
 # preview which jobs would be triggered (without creating runs)
-uv run dlt runtime trigger "tag:ingest" --dry-run
+uv run dlthub job trigger "tag:ingest" --dry-run
 
-# serve one of the notebooks
-uv run dlt runtime serve github_report_notebook
+# serve one of the notebooks (test locally first)
+uv run dlthub local serve github_report_notebook
+uv run dlthub serve github_report_notebook
 ```
 
-The `trigger` command accepts **selectors** -- fnmatch patterns that match
+The `job trigger` command accepts **selectors** -- fnmatch patterns that match
 against job triggers and tags. This lets you fire groups of jobs without naming
 each one.
 
@@ -491,25 +580,25 @@ each one.
 
 ```sh
 # list all deployed jobs
-uv run dlt runtime job list
+uv run dlthub job list
 
 # list only jobs tagged "ingest"
-uv run dlt runtime job "tag:ingest" list
+uv run dlthub job list "tag:ingest"
 
 # detailed info for a specific job
-uv run dlt runtime job load_commits info 
+uv run dlthub job info load_commits
 
 # stream logs
-uv run dlt runtime logs load_commits -f
+uv run dlthub job logs load_commits -f
 
 # cancel the latest run of a specific job
-uv run dlt runtime cancel load_commits
+uv run dlthub job cancel load_commits
 
 # cancel all running jobs matching a selector
-uv run dlt runtime cancel "tag:ingest"
+uv run dlthub job cancel "tag:ingest"
 
 # workspace deployment overview
-uv run dlt runtime info
+uv run dlthub workspace info
 ```
 
 ### What's next
@@ -582,7 +671,7 @@ def transform_jaffle():
 ```
 
 `ingest_jaffle.success` is a trigger string that resolves to
-`job.success:jobs.jaffle_ingestion.ingest_jaffle`. When Runtime sees ingestion
+`job.success:jobs.jaffle_ingestion.ingest_jaffle`. When dltHub sees ingestion
 complete successfully, it immediately fires the transform.
 
 Every decorated job (a `JobFactory` instance) exposes these trigger properties:
@@ -628,7 +717,7 @@ def transform_jaffle(run_context: TJobRunContext):
         print("Triggered by something else")
 ```
 
-`TJobRunContext` is a dict injected by the Runtime launcher. It includes:
+`TJobRunContext` is a dict injected by the dltHub launcher. It includes:
 
 | Key | Type | Description |
 |-----|------|-------------|
@@ -638,9 +727,9 @@ def transform_jaffle(run_context: TJobRunContext):
 
 ### Execution constraints: timeout and grace period
 
-The `execute` parameter controls how Runtime manages a running job. The most
+The `execute` parameter controls how dltHub manages a running job. The most
 common setting is a **timeout** -- a maximum wall-clock duration after which
-Runtime terminates the run.
+dltHub terminates the run.
 
 The ingest job in this workspace has a 6-hour timeout using the string shorthand:
 
@@ -670,9 +759,9 @@ def transform_jaffle():
 The `timeout` field accepts either a human-readable string (`"6h"`, `"30m"`,
 `"90s"`) or a `TTimeoutSpec` dict with `timeout` and `grace_period` in seconds.
 
-When the timeout expires, Runtime sends a termination signal to the job process.
+When the timeout expires, dltHub sends a termination signal to the job process.
 The **grace period** is the window for the job to finish in-flight work (flush
-buffers, commit pending loads) before Runtime hard-kills the process. If the job
+buffers, commit pending loads) before dltHub hard-kills the process. If the job
 exits cleanly within the grace period, the run counts as a normal completion.
 
 | Field | Type | Default | Description |
@@ -764,10 +853,15 @@ A few things worth noting:
 - **`section="jaffle_mcp"`** overrides the default section (which would be the
   containing module name `__deployment__`). This keeps the job's config path
   short and predictable.
-- **`idle_timeout="30m"`** asks Runtime to recycle the server if it sits idle
+- **`idle_timeout="30m"`** asks dltHub to recycle the server if it sits idle
   for 30 minutes. Useful for interactive jobs that shouldn't run forever.
 
-Serve it with `uv run dlt runtime serve jaffle_mcp`.
+Serve it locally first, then remotely:
+
+```sh
+uv run dlthub local serve jaffle_mcp
+uv run dlthub serve jaffle_mcp
+```
 
 ### Job configuration
 
@@ -793,19 +887,20 @@ cd jaffle_shop_workspace
 uv sync
 
 # preview the deployment
-uv run dlt runtime deploy --dry-run
+uv run dlthub deploy --dry-run
 
 # deploy
-uv run dlt runtime deploy
+uv run dlthub deploy
 
-# run pipeline using pipeline name
-uv dlt runtime run-pipeline jaffle_ingest -f
+# run pipeline using pipeline name (test locally first)
+uv run dlthub local pipeline run jaffle_ingest
+uv run dlthub pipeline run jaffle_ingest -f
 ```
 
 After ingestion completes, watch for the transform to start:
 
 ```sh
-uv run dlt runtime logs transform_jaffle -f
+uv run dlthub job logs transform_jaffle -f
 ```
 
 ### What's next
@@ -825,7 +920,7 @@ the entire pipeline graph.
 This workspace ingests real-time earthquake data from the USGS, transforms it
 into analytics tables, and ships a dashboard. It demonstrates dlt's most
 advanced deployment features: **scheduler-driven intervals** (pipelines receive
-start/end bounds from Runtime instead of persisting their own cursor state),
+start/end bounds from dltHub instead of persisting their own cursor state),
 freshness constraints between jobs, a backfill job that cascades a refresh
 signal without loading data, dependency groups, and timezone-aware cron
 scheduling.
@@ -929,14 +1024,14 @@ small snapshot rebuilt on every run.
 
 ### Scheduler-driven intervals
 
-When Runtime fires a scheduled job, it populates `run_context` with the
+When dltHub fires a scheduled job, it populates `run_context` with the
 `[interval_start, interval_end]` window the job should process:
 
 - **Normal run**: the window covers the cron tick that just elapsed. If the
   job missed previous ticks (downtime, freshness gate blocking, ...), the
   scheduler **extends** `interval_start` back to where the last successful
   run ended. Windows are always continuous -- no gaps, no dropped data.
-- **On refresh**: Runtime resets the interval pointer back to the configured
+- **On refresh**: dltHub resets the interval pointer back to the configured
   start of the overall range, so the next run reprocesses the full history.
   The job doesn't have to override `interval_start` manually.
 
@@ -1007,7 +1102,7 @@ epoch = "2026-04-05T00:00:00+00:00"
 ```
 
 In production, `epoch` is `None` (no override in `prod.config.toml`), so
-refreshes use the full `interval.start` range as Runtime provides it.
+refreshes use the full `interval.start` range as dltHub provides it.
 
 ### Module-level job config
 
@@ -1032,7 +1127,7 @@ Reference for the general pattern.
 ### Timezone
 
 `usgs_daily` declares `require={"timezone": "Europe/Berlin"}`. This tells
-Runtime to interpret the job's cron expressions in that IANA timezone --
+dltHub to interpret the job's cron expressions in that IANA timezone --
 `*/3 * * * *` still ticks every 3 minutes, but midnight-based cron
 expressions (`0 0 * * *`) fire at midnight Berlin time rather than UTC.
 
@@ -1108,15 +1203,15 @@ def backfill_usgs(epoch = USGS_EPOCH):
     # place one-shot setup here (schema init, destination warmup, ...)
 ```
 
-When backfill succeeds, Runtime clears `prev_completed_run` on all reachable
+When backfill succeeds, dltHub clears `prev_completed_run` on all reachable
 downstream jobs (BFS walk, stopped by `block` policies). Those jobs then
 start with `run_context["refresh"] = True` and react accordingly:
 
 | Job | `refresh=` | Reaction in body |
 |-----|------------|------------------|
 | `backfill_usgs` | `always` | Originates the cascade. One-shot setup only -- loads no data. |
-| `usgs_daily` | `auto` | Sets `pipeline.refresh = "drop_sources"`. Runtime resets the scheduler interval to `interval.start`; an optional dev-only `epoch` override narrows the window for fast testing. |
-| `transform_earthquakes` | `auto` | Sets `pipeline.refresh = "drop_resources"`. Runtime resets the interval; the transform re-aggregates whatever the ingest loaded. |
+| `usgs_daily` | `auto` | Sets `pipeline.refresh = "drop_sources"`. dltHub resets the scheduler interval to `interval.start`; an optional dev-only `epoch` override narrows the window for fast testing. |
+| `transform_earthquakes` | `auto` | Sets `pipeline.refresh = "drop_resources"`. dltHub resets the interval; the transform re-aggregates whatever the ingest loaded. |
 | `transform_feeds_summary` | `auto` | Sets `pipeline.refresh = "drop_resources"`. The replace transform naturally rebuilds from the refreshed ingest data. |
 
 **Why `drop_sources` vs `drop_resources`:**
@@ -1158,7 +1253,7 @@ def transform_earthquakes(run_context: TJobRunContext):
 The transform doesn't need an `epoch` override -- the amount of data it
 processes is fully controlled by what the ingest job loaded. Its
 `interval={"start": USGS_EPOCH}` tells the scheduler where transformable
-data begins, but on refresh, Runtime resets the window automatically.
+data begins, but on refresh, dltHub resets the window automatically.
 
 The Ibis transformation applies the window as a filter:
 
@@ -1199,7 +1294,7 @@ adding ibis to the workspace's main dependencies, we declare it as a
 ibis = ["ibis-framework[duckdb]"]
 ```
 
-Then tell Runtime to install it only for the jobs that need it:
+Then tell dltHub to install it only for the jobs that need it:
 
 ```python
 @run.pipeline(
@@ -1212,7 +1307,7 @@ def transform_earthquakes(run_context: TJobRunContext):
     ...
 ```
 
-Runtime composes the execution environment from the workspace's base dependencies
+dltHub composes the execution environment from the workspace's base dependencies
 plus the job's declared `dependency_groups`. Ingest jobs get a leaner environment
 without ibis, while transform jobs get the full analytical stack.
 
@@ -1223,31 +1318,41 @@ cd usgs_earthquakes_workspace
 uv sync
 
 # preview the deployment
-uv run dlt runtime deploy --dry-run
+uv run dlthub deploy --dry-run
 
 # deploy the full job graph
-uv run dlt runtime deploy
+uv run dlthub deploy
 
 # kick off the initial setup + cascade refresh to all downstream jobs.
 # backfill_usgs itself does not load data -- it just fires the signal.
 # downstream jobs then reprocess from `epoch` on their next run.
-uv run dlt runtime trigger "tag:backfill"
+uv run dlthub job trigger "tag:backfill"
 
 # after the cascade, cron takes over:
 #   usgs_daily fires every 3 minutes, processing the scheduler-supplied window
 #   transforms fire every 5 minutes (gated on daily freshness)
 
 # monitor
-uv run dlt runtime logs backfill_usgs -f
-uv run dlt runtime logs transform_earthquakes -f
+uv run dlthub job logs backfill_usgs -f
+uv run dlthub job logs transform_earthquakes -f
 
 # force another full refresh at any time
-uv run dlt runtime launch backfill_usgs --refresh
+uv run dlthub run backfill_usgs --refresh
 
 # force full refresh of the transformation layer only
 # both transform jobs are tagged "transform" -- the selector fires both at once
-uv run dlt runtime trigger "tag:transform" --refresh
+uv run dlthub job trigger "tag:transform" --refresh
 ```
+
+To dry-run any of the above on your machine first, swap the cloud verbs for
+their local counterparts:
+
+```sh
+uv run dlthub local run backfill_usgs
+uv run dlthub local run usgs_daily
+uv run dlthub local run transform_earthquakes
+```
+
 ---
 ## Bonus: Workspace Zero
 No profiles, no `uv`, no `pyproject` just raw OSS scripts and notebooks. [Still works](workspace_zero/README.md)

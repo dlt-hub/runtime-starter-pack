@@ -25,8 +25,8 @@ share most arguments. Differences are noted per row.
 | `trigger` | `str`, `TTrigger`, or list | none | `@job`, `@pipeline` | When to run. Accepts cron strings, `trigger.every("5m")`, `trigger.schedule("0 8 * * *")`, followup references (`upstream.success`), or a list of any of these. |
 | `execute` | `TExecuteSpec` | `{}` | all | Execution constraints: `timeout` (string like `"6h"` or `TTimeoutSpec` dict) and `concurrency` (max concurrent runs, default unlimited for batch, 1 for interactive). |
 | `expose` | `TJobExposeSpec` | `{}` | all | UI presentation -- see below. |
-| `require` | `TRequireSpec` | `{}` | all | Runtime resource requirements -- see below. |
-| `deliver` | source / resource / `SourceFactory` | none | `@job`, `@pipeline` | Associates the job with a `@dlt.source` so Runtime can show what data the job produces. `@run.pipeline` sets this from the pipeline name automatically. |
+| `require` | `TRequireSpec` | `{}` | all | Execution-environment resource requirements -- see below. |
+| `deliver` | source / resource / `SourceFactory` | none | `@job`, `@pipeline` | Associates the job with a `@dlt.source` so dltHub can show what data the job produces. `@run.pipeline` sets this from the pipeline name automatically. |
 | `interval` | `TIntervalSpec` | none | `@job`, `@pipeline` | Overall time range for scheduler-driven intervals: `{"start": "2026-01-01T00:00:00Z"}` with optional `"end"` (defaults to now). Together with a cron trigger, defines the set of discrete windows the job covers. On refresh, the scheduler resets the interval pointer to `start`. |
 | `freshness` | constraint string or list | none | `@job`, `@pipeline` | Upstream freshness gates. A gate prevents the job from running until the upstream job's interval is complete. Not a trigger -- the job still runs on its own schedule, but only when the gate is satisfied. Example: `freshness=[upstream.is_fresh]`. |
 | `refresh` | `"auto"` / `"always"` / `"block"` | `"auto"` | `@job`, `@pipeline` | Refresh-signal cascade policy. `"always"` originates a refresh on every success. `"auto"` passes through if received. `"block"` stops propagation. |
@@ -37,14 +37,14 @@ share most arguments. Differences are noted per row.
 ### `expose` -- UI presentation
 
 `expose` is a `TJobExposeSpec` dict controlling how the job appears in the
-Runtime dashboard and how it can be triggered:
+dltHub dashboard and how it can be triggered:
 
 | Key | Type | Default | What it does |
 |-----|------|---------|--------------|
 | `display_name` | `str` | function name | Human-friendly label shown in the UI. May contain spaces and punctuation. |
-| `tags` | `str` or `list[str]` | `[]` | Group labels for organizing and bulk-triggering jobs. Each tag auto-generates a `tag:<name>` trigger so `dlt runtime trigger "tag:..."` fires every job with that tag. |
+| `tags` | `str` or `list[str]` | `[]` | Group labels for organizing and bulk-triggering jobs. Each tag auto-generates a `tag:<name>` trigger so `dlthub job trigger "tag:..."` fires every job with that tag. |
 | `starred` | `bool` | `False` | Pin to the top of the workspace overview UI. |
-| `manual` | `bool` | `True` | When `True`, Runtime auto-adds a `manual:` trigger so users can fire the job from the dashboard or via `dlt runtime launch`. Set to `False` to disable manual triggering entirely. |
+| `manual` | `bool` | `True` | When `True`, dltHub auto-adds a `manual:` trigger so users can fire the job from the dashboard or via `dlthub run`. Set to `False` to disable manual triggering entirely. |
 | `interface` | `"gui"` / `"rest_api"` / `"mcp"` | -- | Set automatically by `@run.interactive(interface=...)`. Rarely set directly. |
 | `category` | `"pipeline"` / `"mcp"` / `"dashboard"` / `"notebook"` | auto | Set automatically by the framework detector or decorator. `@run.pipeline` sets `pipeline`; marimo modules `notebook`; FastMCP modules `mcp`; Streamlit modules `dashboard`. Rarely set manually. |
 
@@ -66,7 +66,7 @@ def daily_sync():
 
 ### `require` -- runtime resource requirements
 
-`require` is a `TRequireSpec` dict telling Runtime how to provision the
+`require` is a `TRequireSpec` dict telling dltHub how to provision the
 execution environment:
 
 | Key | Type | What it does |
@@ -105,7 +105,7 @@ ibis = ["ibis-framework[duckdb]"]
 | `timeout` | `str`, `float`, or `TTimeoutSpec` | none | Max wall-clock duration. String shorthand (`"6h"`, `"30m"`) or a dict with `timeout` (seconds) and `grace_period` (seconds, default 30). |
 | `concurrency` | `int` or `None` | batch: `None`, interactive: `1` | Max concurrent runs. `None` = no limit. |
 
-When timeout expires, Runtime sends a termination signal. The grace period
+When timeout expires, dltHub sends a termination signal. The grace period
 is the window for the job to finish in-flight work before a hard kill.
 
 ```python
@@ -143,7 +143,7 @@ validation, or pass the bare string when the shorthand suffices.
 | `manual` | `trigger.manual()` | `manual:jobs.<...>` | User-initiated via CLI or dashboard. Auto-added when `expose.manual=True` (the default). |
 | `pipeline_name` | `trigger.pipeline_name("my_pipeline")` | `pipeline_name:my_pipeline` | Fires on completion of a named pipeline run. Auto-added by `@run.pipeline`. |
 | `http` | `trigger.http(port=8080, path="/api")` | `http:8080/api` | HTTP endpoint for interactive jobs. Auto-added by `@run.interactive`. |
-| `webhook` | `trigger.webhook("/ingest")` | `webhook:/ingest` | Webhook receiver. Runtime exposes the path and forwards POST bodies to the job. *(not yet implemented)* |
+| `webhook` | `trigger.webhook("/ingest")` | `webhook:/ingest` | Webhook receiver. dltHub exposes the path and forwards POST bodies to the job. *(not yet implemented)* |
 | `deployment` | `trigger.deployment()` | `deployment:` | Fires once per code deploy. Useful for migrations or post-deploy validation. *(not yet implemented)* |
 
 ### Followup triggers
@@ -176,7 +176,7 @@ def report():
 
 ## `__deployment__.py` -- the deployment module
 
-The deployment module declares what exists in the workspace. Runtime discovers
+The deployment module declares what exists in the workspace. dltHub discovers
 jobs by inspecting its contents.
 
 ```python
@@ -205,7 +205,7 @@ __all__ = ["ingest_job", "transform_job", "my_notebook", "my_mcp_server"]
 
 | Dunder | Type | What it does |
 |--------|------|--------------|
-| `__doc__` | `str` | Workspace description shown in the Runtime dashboard. Only the first non-empty line is used. |
+| `__doc__` | `str` | Workspace description shown in the dltHub dashboard. Only the first non-empty line is used. |
 | `__tags__` | `list[str]` | Workspace-level tags applied to the deployment as metadata. |
 | `__all__` | `list[str]` | Explicit list of names to deploy. Strongly recommended -- without it the manifest generator scans the full `__dict__` and warns. |
 
@@ -278,7 +278,7 @@ app = marimo.App()
 ## Auto-set manifest fields
 
 A few fields appear in the deployment manifest without you setting them.
-Useful to know when inspecting `dlt runtime deploy --show-manifest` output:
+Useful to know when inspecting `dlthub deploy --show-manifest` output:
 
 - **`expose.manual = True`** by default -- adds a `manual:<job_ref>` trigger
   so the job can be launched from the CLI or dashboard. Set
@@ -287,16 +287,16 @@ Useful to know when inspecting `dlt runtime deploy --show-manifest` output:
   marimo, `mcp` for FastMCP, `dashboard` for Streamlit) and by
   `@run.pipeline` (`pipeline`).
 - **`expose.tags`** -- each tag automatically adds a `tag:<name>` trigger so
-  `dlt runtime trigger "tag:..."` works without manual trigger setup.
+  `dlthub job trigger "tag:..."` works without manual trigger setup.
 - **`pipeline_name:`** trigger -- added automatically by `@run.pipeline` so
-  `dlt runtime run-pipeline <name>` matches the job.
+  `dlthub pipeline run <name>` matches the job.
 - **`http:`** trigger -- added automatically by `@run.interactive`.
 - **`default_trigger`** -- the manifest generator picks one trigger as the
   primary (prefers `schedule` / `every`; never picks `manual` or
   `deployment`).
 - **Workspace dashboard** -- a synthesized `jobs.workspace.dashboard`
   interactive job is auto-included for every `__deployment__` module so the
-  workspace is browsable in the Runtime UI.
+  workspace is browsable in the dltHub UI.
 
 ---
 
@@ -339,7 +339,7 @@ arguments.
 ## Not yet implemented
 
 Several arguments and features are reserved for future use and currently
-not implemented in Runtime.
+not implemented in dltHub.
 
 ### Decorator arguments
 
@@ -351,13 +351,13 @@ not implemented in Runtime.
 
 | Type | Constructor | Manifest form | Notes |
 |------|-------------|---------------|-------|
-| `webhook` | `trigger.webhook("/ingest")` | `webhook:/ingest` | Webhook receiver -- Runtime exposes the path and forwards POST bodies to the job. |
+| `webhook` | `trigger.webhook("/ingest")` | `webhook:/ingest` | Webhook receiver -- dltHub exposes the path and forwards POST bodies to the job. |
 | `deployment` | `trigger.deployment()` | `deployment:` | Fires once per code deploy. Useful for migrations or post-deploy validation. |
 
 ### Require arguments
 
 | Key | Type | What it does |
 |-----|------|--------------|
-| `provider` | `str` | Infra provider identifier (e.g. `"modal"`). Runtime default when unset. |
+| `provider` | `str` | Infra provider identifier (e.g. `"modal"`). dltHub default when unset. |
 | `machine` | `str` | Machine spec identifier (e.g. `"gpu-a100"`, `"2xlarge"`). |
 | `region` | `str` | Runner region for placement (e.g. `"us-east-1"`). |

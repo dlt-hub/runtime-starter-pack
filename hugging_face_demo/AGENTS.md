@@ -1,6 +1,6 @@
-# Agent Instructions for Runtime Starter Pack (LanceDB)
+# Agent Instructions for dltHub Starter Pack (LanceDB)
 
-This is a runtime starter pack for working with LanceDB and dlt (data load tool).
+This is a dltHub starter pack for working with LanceDB and dlt (data load tool).
 
 ## CRITICAL: Package Management
 
@@ -17,7 +17,7 @@ This is a strict requirement for this project.
 
 ## Project Context
 
-This project demonstrates how to use dlt runtime with LanceDB as a vector database destination.
+This project demonstrates how to use dlt with LanceDB as a vector database destination, deployed on dltHub.
 
 ## Key Files
 
@@ -119,4 +119,4 @@ Always use `uv` for package management (see CRITICAL section above).
 
 - This is a starter pack template - customize as needed for specific use cases
 - LanceDB is used as the vector database destination
-- dlt-runtime is the core dependency for data loading
+- `dlthub-client` is installed via the `dlt[hub]` extra and provides cloud deployment
