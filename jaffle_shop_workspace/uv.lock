@@ -8,6 +8,9 @@ resolution-markers = [
     "(python_full_version < '3.14' and platform_python_implementation == 'PyPy') or (python_full_version < '3.14' and sys_platform == 'emscripten')",
 ]
 
+[manifest]
+constraints = [{ name = "dlt-runtime", specifier = ">=0.26.2a1" }]
+
 [[package]]
 name = "aiofile"
 version = "3.9.0"
@@ -424,7 +427,7 @@ workspace = [
 
 [[package]]
 name = "dlt-runtime"
-version = "0.26.1"
+version = "0.26.2a1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -435,9 +438,9 @@ dependencies = [
     { name = "pyjwt" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/65/a500b1b2fede1384fda12cbddca0f04f45cd2c997440bf8deeacfc1f3437/dlt_runtime-0.26.1.tar.gz", hash = "sha256:8d41965c173bb2743001f3ee8bdb75d567e792189bfc785f6a163fc2da8a63de", size = 111759, upload-time = "2026-04-28T17:56:43.236Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/5f/9fa38de46aa190ed6c7ee53492c404e2b99aea9fbc60e891af5be540fdc5/dlt_runtime-0.26.2a1.tar.gz", hash = "sha256:ec886863287a48434fc209158e3ebdf314f8d0245946a4cf2085029c6b5e9ebd", size = 120316, upload-time = "2026-05-12T08:16:09.79Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/de/2cad31151d1347f8fdd42d87e1a2f4ac57d9e3371bcc9a2f99cc21edd28b/dlt_runtime-0.26.1-py3-none-any.whl", hash = "sha256:f220fb47cd0baa06e2868f2a3e75995b19562300d98e45eca7c5fd87495966f7", size = 259251, upload-time = "2026-04-28T17:56:41.786Z" },
+    { url = "https://files.pythonhosted.org/packages/65/92/d1e56ab5c2de927a8851cb3f7d889047a658af19e2c228a6b1ba7278d224/dlt_runtime-0.26.2a1-py3-none-any.whl", hash = "sha256:ea4bcb7e357ff4b62b5aebc6cb0092311b2f812e82c5b5bab0d40d6515fd79fd", size = 277780, upload-time = "2026-05-12T08:16:08.265Z" },
 ]
 
 [[package]]
